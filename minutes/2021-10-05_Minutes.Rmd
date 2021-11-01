@@ -11,7 +11,7 @@ The meeting was recorded: [video](https://rstudio.zoom.us/rec/share/smbRfQx85FwC
 ### R Repository WG minutes 2021-10-05
 [Minutes from last time:](https://github.com/RConsortium/r-repositories-wg/tree/main/minutes (these minutes will also go there after the meeting))
 
-Attendees: Joe Rickett (Chair); Hadley Wickham, Maëlle Salmon, Lluís Revilla, James Black, Will Landau, Jeroen Ooms, Gabor Csari, Michael Lawrence, Ellis Hughes, Brian Warner, Paul Schuette, Andy Nicholls.
+Attendees: Joe Rickert (Chair); Hadley Wickham, Maëlle Salmon, Lluís Revilla, James Black, Will Landau, Jeroen Ooms, Gabor Csari, Michael Lawrence, Ellis Hughes, Brian Warner, Paul Schuette, Andy Nicholls.
 
 After last meeting, decided to use github issues to track issues — two issues filed:  
 
