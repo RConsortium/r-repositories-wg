@@ -1,0 +1,67 @@
+---
+title: "2022-01-04_Minutes"
+author: "Joseph Rickert"
+date: "1/4/2022"
+output: html_document
+---
+
+Minutes for the 2022-01-04 of the Repositories working group, compiled by Hadley Wickham and Joseph Rickert.
+
+### Attendees:   
+
+* Gabriel Becker
+* James Black
+* Will Landau
+* Jeroen Ooms
+* Lluis Revilla
+* Joseph Rickert
+* Maëlle Salmon
+* Paul Schuette
+* Heather Turner
+* Hadley Wickham
+
+JR began the meeting by noting that he has had a request to change the time of the meeting and asked if the group was fine with circulating a poll to try and find a new time. There was no objection. He also noted that he neglected to write up minutes for the last meeting.
+
+
+
+### Actions from December Meeting
+Those present recalled actions from the last meeting: 
+
+* The WG had agreed to try and make progress towards making it possible for R-Hub to do the same checks as CRAN. 
+* Michael Lawrence is working to restart R-Foundation <-> CRAN meetings. Starting point to engage with this group and to hire developer advocate.
+* The WG needs to come to a decision about the proposed email to CRAN: https://github.com/RConsortium/r-repositories-wg/blob/main/minutes/2021-11-02.md
+
+### Discussion
+There was an extended discussion about a proposal to implement an [R-universe](https://r-universe.dev/organizations/) based repository (named RC for now) to organize R packages on GitHub that are not on CRAN. With R-universe, anyone can easily create their own repository based on their own rules.
+
+In addition to any practical benefit to the community, such a project would provide the opportunity to think through the practical issues and philosophy of establishing a repository. Topics discussed included:
+
+* What would be the difference from CRAN? 
+* On the spectrum between developer-pain and user-pain, CRAN is far towards developer-pain. So presumably any alternative would decrease developer-pain in trade off for some additional user-pain. What does that mean?
+* What happens if R CMD check fails? Is it removed, or is the developer/user just warned? Are only binaries for passing packages available?
+* Do you need to pass R CMD check to submit? Do your revdeps also need to pass? Are packages in a collection guaranteed to work together? Handling of revdep breakages is clearly very important and needs substantial discussion.
+* Can packages overlap with CRAN or not? Advantage of overlap is that you could have more bleeding edge packages with binaries. Disadvantage of overlap is potential for confusion; how do you know which version you have installed? (Same problem currently arises with github packages, but this would make it worse)
+* What is required to distribute a package? Passing R CMD check or just succeeding with R CMD install.
+* How do releases happen? Explicitly from releases? Pinned to master? 
+* What are the rules for the RC repository? 
+* Why use this system?
+* Other packages can depend on it (unlike just publishing to GitHub).
+* Are all packages are (eventually) mutually compatible? 
+* Would RC be a stepping stone to CRAN?
+* 100% automated; 0% human.
+* Is passing R CMD check required?
+
+Big levers to discuss include: 
+
+* Namespace; distinct or overlapping with CRAN?
+* What does the initial submission process look like?
+* What’s the policy around revdep checks?
+* What do updates look like? 
+* Should old versions be archived? Is reproducibility are core value?
+* How do we expose developers to build/check failures?
+* How do we expose users to build/check failures?
+
+### Next Steps
+We will set up a google doc where we can begin articulating the design philosophy of the RC repository.
+
+The next meeting is currently set for February 1, 2022 at 10AM Pacific Time. However, please watch out for the poll about changing the time.
