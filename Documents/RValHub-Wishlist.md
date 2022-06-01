@@ -47,14 +47,14 @@
 * Historical snapshots that remain human interpretable when more than one update
   in a calendar day
 
-    https://fake-repo.org/snapshot/2022-01-01 (by calendar date)
-    https://fake-repo.org/snapshot/2022-01-01T01:01.00+000 (by timestamp)
-    https://fake-repo.org/snapshot/12345  (by change increment)
+    `https://fake-repo.org/snapshot/2022-01-01` (by calendar date)  
+    `https://fake-repo.org/snapshot/2022-01-01T01:01.00+000` (by timestamp)  
+    `https://fake-repo.org/snapshot/12345`  (by change increment)  
 
 * Perhaps the ability to specify filters via repo url query params and/or set
   alias for applied filters. For example, filtering on coverage threshold:
 
-    https://fake-repo.org?maintainer=active
+    `https://fake-repo.org?maintainer=active`
 
   Which would serve a repo endpoint of packages who themselves and all
   dependencies have an active maintainer
