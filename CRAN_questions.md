@@ -1,4 +1,4 @@
-This document briefly presents some questions this working group has discussed about CRAN to help it being successful.
+This document briefly presents some questions this working group has discussed to help CRAN remain successful.
 
  * CRAN does an amazing amount of work. What are the most critical issues that CRAN is facing?
  * CRAN has been extraordinarily successful over its first 20 years; how can we ensure that its next 20 years are just as successful?
