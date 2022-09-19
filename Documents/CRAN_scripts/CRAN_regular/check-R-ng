@@ -1,0 +1,585 @@
+#! /bin/sh
+
+## Fully Qualified Domain Name of the system we use for checking.
+FQDN=`hostname -f`
+
+## Default flavor to use.
+R_flavor=r-devel
+## Location of the CRAN mirror root on the local file system.
+case ${FQDN} in
+  *.wu.ac.at)
+    CRAN_rsync=/srv/R/Repositories/CRAN ;;
+  *)
+    CRAN_rsync=/data/Repositories/CRAN ;;
+esac
+## Location of CRAN's src/contrib on the local file system.
+CRAN_dir=${CRAN_rsync}/src/contrib
+## Default check args.
+check_args_defaults=
+## Where everything happens.
+check_dir=~/tmp/R.check
+## Check date in ISO 8601 format: POSIX compatible according to
+## <http://pubs.opengroup.org/onlinepubs/009604599/utilities/date.html>.
+check_date=`date "+%F"`
+check_results_mail_recipients="Kurt.Hornik@wu.ac.at"
+## case ${FQDN} in
+##   gimli.wu.ac.at)
+##     check_results_mail_recipients="Kurt.Hornik@wu.ac.at maechler@stat.math.ethz.ch Uwe.Ligges@R-project.org"
+##     ;;
+## esac
+check_results_files="summary.csv timings.csv details.csv"
+
+## Compilers to use.
+## Use configure defaults (gcc/g++/gfortran).
+compilers=
+## Note that (in particular to achieve additional C++ strictness) we
+## prefer to run checks with
+##   CFLAGS = -g -O2 -Wall -pedantic
+##   CXXFLAGS = -g -O2 -Wall -pedantic
+## but use machine-local ~/.R/Makevars for setting this.
+## Additional command line arguments to configure.
+blas="--with-blas=no"
+## <FIXME>
+## As of 2019-04, tried to avoid gfortran-8 problems/bugs by using the
+## system BLAS/LAPACK libraries:
+##   configure_args="--with-blas=yes --with-lapack=yes --enable-R-shlib LIBnn=lib"
+## Note that this also needs OPENBLAS_NUM_THREADS=1.
+## In case this still causes troubles, switch back to
+configure_args="--enable-R-shlib DEFS='-D_FORTIFY_SOURCE=2' LIBnn=lib"
+## with the problems still not fixed ...
+## </FIXME>
+## Number of jobs/cores to use.
+n_jobs=1
+## Mechanism to parallelize package checking.
+check_packages_via_parallel_make=no
+## Build R and manuals?  (Empty string corresponds to no.)
+build_R=yes
+
+## R scripts directory.
+R_scripts_dir=~/lib/R/Scripts
+## Shell scripts directory.
+sh_scripts_dir=~/lib/bash
+
+suffix=gcc
+
+## Command line args.
+while test -n "${1}"; do
+  case "${1}" in
+    -f)
+      R_flavor=${2}
+      shift
+      case "${R_flavor}" in
+	local=*)
+	  R_source_path=`expr "${R_flavor}" : "^local=\(.*\)"`
+	  R_flavor=local
+	  ;;
+      esac
+      ;;
+    -j)
+      n_jobs=${2}
+      shift
+      ;;
+    -m)
+      check_packages_via_parallel_make=yes
+      ;;
+    -b)
+      blas="--with-blas=yes --with-lapack=yes"
+      ;;
+    -c)
+      flavor=${2}
+      case "${flavor}" in
+	g*)
+	  v=`expr "${flavor}" : ".*/\\(.*\\)"`
+	  gcc_series_is_6=false
+	  case "${v}" in
+	    6)
+              gcc_series_is_6=true ;;
+	  esac
+	  test -n "${v}" && v="-${v}"
+	  ## Breaks many packages:
+	  ##   CCSTD="-std=c11"
+	  CCSTD=
+	  ## CXXSTD="-std=c++98"
+	  ## CXXSTD=
+	  ## if test "${gcc_series_is_6}" = "true"; then
+	  ##   CXXSTD="-std=c++11"
+	  ## fi
+	  CC="gcc${v}"
+	  ## CC="\"gcc${v} ${CCSTD}\""
+	  CXX="g++${v}"
+	  ## CXX="\"g++${v} ${CXXSTD}\""
+	  compilers="CC=${CC} CXX=${CXX} F77=gfortran${v} FC=gfortran${v} OBJC=gcc${v} OBJCXX=gcc${v}"
+	  ## compilers="CC=${CC} CXX=${CXX} CXXSTD=${CXXSTD} F77=gfortran${v}
+	  ##   FC=gfortran${v} OBJC=gcc${v} OBJCXX=gcc${v}"
+	  ## if test "${gcc_series_is_6}" = "true"; then
+	  ##   compilers="${compilers} CXX1XSTD=\"-std=c++11\""
+	  ## fi
+	  ;;
+	c*)
+	  suffix=clang
+	  vc=`expr "${flavor}" : "[^/]*/\\([^/]*\\)\\(/.*\\)\\?"`
+	  vg=`expr "${flavor}" : "[^/]*/[^/]*/\\(.*\\)"`
+	  test -n "${vc}" && vc="-${vc}"
+	  test -n "${vg}" && vg="-${vg}"
+	  ## CXXSTD="-std=c++98"
+	  CC="clang${vc}"
+	  CXX="clang++${vc}"
+	  ## CXX="\"clang++${vc} -std=c++11\""
+          compilers="CC=${CC} CXX=${CXX} F77=gfortran${vg} FC=gfortran${vg} OBJC=gcc${vg} OBJCXX=gcc${vg}"
+          ## compilers="CC=${CC} CXX=${CXX} CXXSTD=${CXXSTD} F77=gfortran${vg}
+	  ##   FC=gfortran${vg} OBJC=gcc${vg} OBJCXX=gcc${vg}"
+	  ## ## <FIXME>
+	  ## ## Added 2018-04-03 to avoid compilation errors for
+	  ## ## RcppArmadillo: remove eventually ...?
+	  ## CXX11STD="-std=c++11"
+	  ## CXX14STD="-std=c++14"
+	  ## compilers="${compilers} CXX11STD=${CXX11STD} CXX14STD=${CXX14STD}"
+	  ## ## </FIXME>
+	  ;;
+      esac
+      shift
+      ;;
+    -a)
+      configure_args="${configure_args} ${2}"
+      shift
+      ;;
+  esac
+  shift
+done
+
+configure_args="${configure_args} ${blas}"
+
+case "${R_flavor}" in
+  r-devel)
+    R_source_url=https://cran.r-project.org/src/base-prerelease/R-devel.tar.gz
+    ## R_source_url=https://stat.ethz.ch/R/daily/R-devel.tar.gz
+    ;;
+  r-patched)
+    R_source_url=https://cran.r-project.org/src/base-prerelease/R-latest.tar.gz
+    ## R_source_url=https://stat.ethz.ch/R/daily/R-patched.tar.gz
+    ;;
+  r-prerel)
+    R_source_url=https://cran.r-project.org/src/base-prerelease/R-latest.tar.gz
+    ;;
+  r-release)
+    R_source_url=https://cran.r-project.org/src/base/R-latest.tar.gz
+    ;;
+esac
+
+check_flavor="${R_flavor}-${suffix}"
+
+case ${FQDN} in
+  gimli*.wu.ac.at)
+    case "${R_flavor}" in
+      r-devel)
+	check_results_mail_recipients="Kurt.Hornik@wu.ac.at Uwe.Ligges@R-project.org maechler@stat.math.ethz.ch"
+	;;
+      r-patched|r-prerel)
+	check_results_mail_recipients="Kurt.Hornik@wu.ac.at maechler@stat.math.ethz.ch"
+	;;
+      r-release)
+	check_results_mail_recipients="Kurt.Hornik@wu.ac.at Uwe.Ligges@R-project.org"
+	;;
+    esac
+    ;;
+esac
+
+## No process is allowed more than 20 minutes
+ulimit -t 1200
+
+## Apparently needed when using bindfs to obtain a read-only mounted
+## user library for checking:
+ulimit -n 2048
+
+## Use a bit more max stack size than used by default.
+ulimit -s 16384
+
+## <FIXME>
+## No longer necessary with Rmpi 0.6-7 as of 2018-04-11:
+## remove eventually. 
+## ## Customize distributed computing environment(s).
+## RMPI_TYPE="OPENMPI"
+## RMPI_INCLUDE="/usr/lib/x86_64-linux-gnu/openmpi/include"
+## RMPI_LIB_PATH="/usr/lib/x86_64-linux-gnu/openmpi/lib"
+## ## <FIXME>
+## ## With the above, Rmpi should now use OpenMPI instead of LAM, and hence
+## ## no longer call lamboot: so setting LAM_MPI_SESSION_SUFFIX and calling
+## ## lamwipe should no longer be necessary.
+## ## ## Running Rmpi calls lamboot so that at the end we should clean up by
+## ## ## calling lamwipe.  Of course, the LAM RTE should be check process
+## ## ## specific, which can be accomplished via LAM_MPI_SESSION_SUFFIX.
+## ## export LAM_MPI_SESSION_SUFFIX=${check_flavor}
+## ## Remove eventually ...
+## ## </FIXME>
+## </FIXME>
+
+## Customize R
+## <FIXME>
+##   if test "${check_flavor}" != "r-devel-gcc"; then
+export R_BROWSER=false
+export R_PDFVIEWER=false
+##   fi
+## </FIXME>
+## Try using a UTF-8 locale.
+## export LANG="en_US.UTF-8"
+export LANG="C.UTF-8"
+## But not for sorting ...
+export LC_COLLATE=C
+export LANGUAGE="en@quot"
+export R_PARALLEL_PORT=random
+## Avoid hyperref problems with paper size 'letter'.
+export R_PAPERSIZE=a4
+## Documented to be true in R-ints, but apparently not always.
+export _R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_=true
+
+## <FIXME>
+## Setting this in check_CRAN_regular.R should be good enough ...?
+##   export R_GC_MEM_GROW=2
+## </FIXME>
+
+## <FIXME>
+## Setting this in check_CRAN_regular.R should be good enough ...?
+##   export OMP_NUM_THREADS=4
+##   export OMP_THREAD_LIMIT=4
+##   export RCPP_PARALLEL_NUM_THREADS=4
+## </FIXME>
+
+## <FIXME>
+## Setting this in check_CRAN_regular.R should be good enough ...?
+##   export _R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_=true
+## </FIXME>
+
+## Use r-devel-clang to record S3 method search path lookups.
+if test "${check_flavor}" = "r-devel-clang"; then
+  export _R_S3_METHOD_LOOKUP_REPORT_SEARCH_PATH_USES_=true
+fi  
+
+## <FIXME>
+if test "${check_flavor}" = "r-devel-clang"; then
+  export LANG=en_US.iso885915
+fi
+## </FIXME>
+
+## if test "${check_flavor}" = "r-devel-clang"; then
+##   export _R_CHECK_LENGTH_1_CONDITION_="package:_R_CHECK_PACKAGE_NAME_,verbose"
+## fi
+
+## <FIXME>
+## Setting this in check_CRAN_regular.R should be good enough ...?
+##   export _R_CHECK_INSTALL_DEPENDS_=true
+## </FIXME>
+
+## <FIXME>
+## Default was 100, changed in c73545 for R 3.5.
+## Remove eventually ...
+##   export R_MAX_NUM_DLLS=123
+## </FIXME>
+
+## <NOTE>
+## Set if necessary ...
+##   export R_BIOC_VERSION=3.6
+## </NOTE>
+
+user=${USER-${LOGNAME}}
+export R_USER_DATA_DIR="/tmp/check-CRAN-regular-${user}/data"
+export R_USER_CACHE_DIR="/tmp/check-CRAN-regular-${user}/cache"
+export R_USER_CONFIG_DIR="/tmp/check-CRAN-regular-${user}/config"
+
+## Create check dir if needed.
+test -d ${check_dir} || mkdir ${check_dir} || exit 1
+cd ${check_dir}
+## Structure inside ${check_dir}: subdirectories for each flavor.
+## Within a flavor subdirectory, most of the work happens in 'Work'.
+## Inside this, R sources are in 'src', R is built in 'build', and
+## packages are in 'PKGS'.  When done, 'PKGS' is moved up for mirroring,
+## and results are saved in 'Results/${check_date}'.
+test -d ${check_flavor} || mkdir ${check_flavor} || exit 1
+cd ${check_flavor}
+## <FIXME>
+## We used to do:
+##   ## If there is an old Xvfb/check process remaining, kill it:
+##   test -f Xvfb.pid && kill -9 `cat Xvfb.pid`
+##   test -f check.pid && kill -9 `cat check.pid`
+## But perhaps better to abort and investigate ...?
+if test -f check.pid; then
+  echo "Old check process still running ... aborting." | \
+  env from=Kurt.Hornik@wu.ac.at replyto=Kurt.Hornik@R-project.org \
+      REPLYTO=Kurt.Hornik@R-project.org \
+    mail -s "[CRAN-check-ng] ${check_flavor}/`hostname` FAILURE" \
+    -r Kurt.Hornik@wu.ac.at \
+    Kurt.Hornik@R-project.org
+  exit 1
+fi
+
+## Record check pid.
+echo ${$} > check.pid
+## Start a virtual framebuffer X server and use this for DISPLAY so that
+## we can run package tcltk and friends.  We use the PID of the check
+## process as the server number so that the checks for different flavors
+## get different servers.
+PATH=${HOME}/bin:/usr/local/bin:${PATH}
+Xvfb :${$} -screen 0 1280x1024x24 >/dev/null 2>&1 &
+echo ${!} > Xvfb.pid
+export DISPLAY=:${$}
+
+## <FIXME>
+## Shouldn't this shut down Xvfb as well and remove its pid file?
+do_cleanup_and_exit () {
+## <FIXME>
+## This should no longer be necessary ...
+##   lamwipe -sessionsuffix ${check_flavor} || true
+## Remove eventually.
+## </FIXME>
+  kill -9 `cat "${check_dir}/${check_flavor}/Xvfb.pid"` 2>/dev/null && \
+    rm -f "${check_dir}/${check_flavor}/Xvfb.pid"
+  rm -f "${check_dir}/${check_flavor}/check.pid"
+  ## These get populated by the check runs ...
+  rm -rf ~/.cache/fontconfig
+  rm -rf ~/.cache/pocl
+  exit ${1-0}
+}
+## </FIXME>
+
+export _CHECK_CRAN_REGULAR_LIBRARY_DIR_="${check_dir}/${check_flavor}/Work/build/Packages"
+## Unmounting the read-only remount of the library dir from the previous
+## check run may have failed (e.g., due to leftover processes keeping
+## the library dir busy).  If so, try unmounting once more, and if this
+## fails again, report the offending processes.
+## Note that we currently also do a bind remount for ${check_dir} to
+## /srv/rsync/R.check, so that mount will report the library dir mount
+## with a path starting with /src/rsync/R.check.
+(mount | grep -Fq "${check_flavor}/Work/build/Packages") && \
+  umount "${_CHECK_CRAN_REGULAR_LIBRARY_DIR_}" || \
+  (fuser "${_CHECK_CRAN_REGULAR_LIBRARY_DIR_}" && \
+     do_cleanup_and_exit 1)
+
+test -d Work || mkdir Work || do_cleanup_and_exit 1
+cd Work
+
+if test -n "${build_R}"; then
+## Update ${R_flavor} sources.
+## Actually, we should check whether flavor of source and target agree.
+test -d src || mkdir src || do_cleanup_and_exit 1
+## Argh, rsync is gone (at least for the time being ...).
+## We could of course use svn checkout on https://svn.R-project.org/R,
+## but how can one get "r-patched" and "r-release" without knowing the
+## corresponding branch?  Hence, we get things from CRAN (release) or
+## ETHZ, but need to figure out the top-level source dir for the
+## unpackaged version somehow (of course, we could also read this from
+## the archive).
+##   (cd src; rsync -rC -t --delete rsync.r-project.org::${R_flavor} .)
+## <NOTE>
+## Maybe we should use svn checkout for r-devel?
+## </NOTE>
+mv src src.save
+(mkdir tmp &&
+  cd tmp &&
+  touch stamp &&
+  (if test "${R_flavor}" = "local"; then
+     tar zxmf "${R_source_path}"
+   else
+     wget -O - --retr-symlinks ${R_source_url} | tar zxmf -
+   fi) &&
+  entry=`find . -mindepth 1 -maxdepth 1 -newer stamp -type d` &&
+  mv ${entry} ../src &&
+  cd .. &&
+  rm -rf src.save tmp) || (rm -rf tmp; mv src.save src)
+
+## Link recommended packages.
+(cd src; \
+  CRAN_RSYNC="${CRAN_rsync}" ./tools/rsync-recommended)
+
+## Rebuild R.
+rm -rf build
+mkdir build
+(cd build &&
+  eval ../src/configure ${configure_args} ${compilers}) || \
+    do_cleanup_and_exit 1
+## Try to avoid hard-wiring top-level CRAN master URLs in HTML hrefs
+## from the Texinfo manuals.
+if test -f "/usr/share/texinfo/htmlxref.cnf"; then
+  (echo "R = .";
+   cat "/usr/share/texinfo/htmlxref.cnf" | grep '^ R-') > \
+     build/doc/manual/htmlxref.cnf
+fi
+(cd build &&
+  make -j `echo "${n_jobs}" | cut -f1 -d/` &&
+  make check &&
+  make pdf) || \
+    do_cleanup_and_exit 1
+(cd build/doc/manual &&
+  make fullrefman.pdf) || \
+    do_cleanup_and_exit 1
+(cd build/doc &&
+  make docs2) || \
+    do_cleanup_and_exit 1
+(cd build/doc/manual &&
+  make epub)
+fi
+
+mkdir -p build/Packages
+
+if test -f ./build/bin/R; then
+  R_HOME=`./build/bin/R RHOME`
+else
+  R_HOME=`R RHOME`
+fi
+R_exe="${R_HOME}/bin/R"
+
+## Packages.
+rm -rf PKGS			# In case there are some leftovers ...
+mkdir PKGS
+cd PKGS
+
+## Check profile and environ settings.
+export R_PROFILE_USER="${HOME}/.R/check_CRAN_regular.Rprofile"
+## export R_CHECK_ENVIRON="${HOME}/.R/check_CRAN_regular.Renviron"
+export R_MAKEVARS_USER="${HOME}/.R/Makevars-${suffix}"
+
+test -d "${HOME}/tmp/scratch" && export TMPDIR="${HOME}/tmp/scratch"
+
+## Pass over to R for installation and checking and summaries ...
+${R_HOME}/bin/Rscript ${R_scripts_dir}/check_CRAN_regular.R \
+  -j ${n_jobs} -m ${check_packages_via_parallel_make}
+
+## Wrap up.
+cd ${check_dir}/${check_flavor}
+
+## Rotate old check results files.
+for f in ${check_results_files} details.rds ; do
+  test -f "${f}.prev" && rm -f "${f}.prev"
+  test -f "${f}"      && mv "${f}" "${f}.prev"
+done
+## Rotate old check results.
+## <FIXME>
+## Remove the chmod -R eventually ...
+test -d PKGS.prev && chmod -R u+w PKGS.prev && rm -rf PKGS.prev
+test -d PKGS      && chmod -R u+w PKGS      && mv PKGS PKGS.prev
+## </FIXME>
+## Move new check results up from Work.
+mv Work/PKGS PKGS
+chmod -R u+w PKGS
+## Move new check results files up from PKGS.
+for f in ${check_results_files} details.rds ; do
+  mv PKGS/"${f}" .
+done
+## Save new check results files.
+for d in Results Results/${check_date}; do
+  test -d ${d} || mkdir ${d} || do_cleanup_and_exit 1
+done
+for f in ${check_results_files}; do
+  cp "${f}" "Results/${check_date}"
+done
+
+## And notify of differences ...
+if test -f "summary.csv.prev"; then
+  diff "summary.csv.prev" "summary.csv" > "summary.csv.diff"
+  test -s "summary.csv.diff" || rm -f "summary.csv.diff"
+fi
+if test -f "summary.csv.diff"; then
+  echo "source(\"${R_scripts_dir}/check.R\"); \
+        write_check_summary_diffs_to_con(\".\", \"summary.csv.diff\")" | \
+    ${R_exe} --vanilla --slave
+  env from=Kurt.Hornik@wu.ac.at replyto=Kurt.Hornik@R-project.org \
+      REPLYTO=Kurt.Hornik@R-project.org \
+    mail -s "[CRAN-check-ng] ${check_flavor}/`hostname` summary.csv changes on `date '+%FT%T%z'`" \
+    -r Kurt.Hornik@wu.ac.at \
+    ${check_results_mail_recipients} < "summary.csv.diff"
+  rm -f "summary.csv.diff"
+fi
+
+if test -f "details.csv.prev"; then
+  diff "details.csv.prev" "details.csv" > "details.csv.diff"
+  test -s "details.csv.diff" || rm -f "details.csv.diff"
+fi
+if test -f "details.csv.diff"; then
+  echo "source(\"${R_scripts_dir}/check.R\"); \
+        flavor <- check_flavors_map[\"${check_flavor}\"]; \
+        write_check_details_diffs_to_con(\".\", \"details.csv.diff\", flavor)" | \
+    ${R_exe} --vanilla --slave
+  env from=Kurt.Hornik@wu.ac.at replyto=Kurt.Hornik@R-project.org \
+      REPLYTO=Kurt.Hornik@R-project.org \
+    mail -s "[CRAN-check-ng] ${check_flavor}/`hostname` details.csv changes on `date '+%FT%T%z'`" \
+    -r Kurt.Hornik@wu.ac.at \
+    ${check_results_mail_recipients} < "details.csv.diff"
+  rm -f "details.csv.diff"
+  echo "source(\"${R_scripts_dir}/check.R\"); \
+        write_check_details_for_new_problems_to_con(\".\", \"details.txt\")" | \
+    ${R_exe} --vanilla --slave
+  test -s "details.txt" && \
+    env from=Kurt.Hornik@wu.ac.at replyto=Kurt.Hornik@R-project.org \
+	REPLYTO=Kurt.Hornik@R-project.org \
+      mail -s "[CRAN-check-ng] ${check_flavor}/`hostname` new problems on `date '+%FT%T%z'`" \
+      -r Kurt.Hornik@wu.ac.at \
+      ${check_results_mail_recipients} < "details.txt"
+  rm -f "details.txt"
+fi
+
+## Manuals
+
+if test -n "${build_R}"; then
+test -d Manuals.prev && rm -rf Manuals.prev
+test -d Manuals      && mv Manuals Manuals.prev
+mkdir Manuals
+## <FIXME 3.4.0>
+## Change back to copying when 3.2.0 is out.
+##   cp Work/build/doc/manual/*.html Manuals
+for f in Work/build/doc/manual/*.html; do
+  grep -v '="dir.html#Top"' ${f} > Manuals/`basename ${f}`
+done
+## </FIXME>
+cp Work/build/doc/manual/*.pdf   Manuals
+## It would be better to have a single R.css and logo.jpg/Rlogo.svg, and
+## fix NEWS.html accordingly.
+cat Work/build/doc/html/NEWS.html | \
+  sed 's/img src="[^"]*logo.jpg"/img src="logo.jpg"/' | \
+  sed 's/img src="[^"]*Rlogo.svg"/img src="Rlogo.svg"/' \
+  > Manuals/NEWS.html
+cp Work/build/doc/html/R.css     Manuals
+cp Work/build/doc/html/logo.jpg  Manuals
+cp Work/build/doc/html/Rlogo.svg Manuals
+cp Work/build/doc/NEWS*.pdf      Manuals
+cat Work/build/doc/html/NEWS.2.html | \
+  sed 's/img src="[^"]*Rlogo.svg"/img src="Rlogo.svg"/' \
+  > Manuals/NEWS.2.html
+cat Work/build/doc/html/NEWS.3.html | \
+  sed 's/img src="[^"]*Rlogo.svg"/img src="Rlogo.svg"/' \
+  > Manuals/NEWS.3.html
+cp Work/build/doc/manual/*.epub  Manuals
+mkdir Manuals/images
+cp Work/build/doc/manual/images/*.png Manuals/images
+fi
+
+## Refmans in HTML (if available)
+if test -f Work/build/library/base/html/mean.html; then
+  test -d Refmans.prev && rm -rf Refmans.prev
+  test -d Refmans      && mv Refmans Refmans.prev
+  mkdir -p Refmans/base
+  for f in Work/build/library/*/DESCRIPTION; do
+    grep -q "^Priority: base" ${f} || continue
+    d=`dirname ${f}`
+    p=`basename ${d}`
+    mkdir -p Refmans/base/${p}
+    cp ${d}/DESCRIPTION Refmans/base/${p}
+    cp -r ${d}/help Refmans/base/${p}
+    cp -r ${d}/html Refmans/base/${p}
+  done
+  mkdir -p Refmans/CRAN
+  for f in Work/build/Packages/*/DESCRIPTION; do
+    grep -q "^Repository: CRAN" ${f} || continue
+    d=`dirname ${f}`
+    p=`basename ${d}`
+    mkdir -p Refmans/CRAN/${p}
+    mv ${d}/help Refmans/CRAN/${p}
+    mv ${d}/html Refmans/CRAN/${p}
+  done
+fi
+
+
+do_cleanup_and_exit
+
+### Local Variables: ***
+### mode: sh ***
+### sh-basic-offset: 2 ***
+### End: ***
+
