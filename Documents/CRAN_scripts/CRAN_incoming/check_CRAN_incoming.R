@@ -1,4 +1,11 @@
 check_dir <- file.path(normalizePath("~"), "tmp", "CRAN")
+if (!dir.exists(check_dir)) {
+  dir.create(check_dir)
+  message(check_dir, " Created")
+}
+
+# Place lib directory with all .sh files is
+lib_dir <- "../lib/"
 
 user <- Sys.info()["user"]
 if(user == "unknown") user <- Sys.getenv("LOGNAME")
@@ -105,15 +112,15 @@ usage <- function() {
 }
 
 check_args_db_from_stoplist_sh <-
-function()
-{
-    x <- system(". ~/lib/bash/check_R_stoplists.sh; set", intern = TRUE)
+  function(stoplist_path = "../lib/check_R_stoplists.sh")
+  {
+    x <- system(paste(".", stoplist_path, "; set"), intern = TRUE)
     x <- grep("^check_args_db_", x, value = TRUE)
     db <- sub(".*='(.*)'$", "\\1", x)
     names(db) <-
-        chartr("_", ".", sub("^check_args_db_([^=]*)=.*", "\\1", x))
+      chartr("_", ".", sub("^check_args_db_([^=]*)=.*", "\\1", x))
     db
-}
+  }
 
 args <- commandArgs(trailingOnly = TRUE)
 if(any(ind <- (args %in% c("-h", "--help")))) {
@@ -184,7 +191,7 @@ if(length(args)) {
 
 
 check_args_db <- if(use_check_stoplists) {
-    check_args_db_from_stoplist_sh()
+    check_args_db_from_stoplist_sh(stoplist_path = file.path(lib_dir, "check_R_stoplists.sh"))
 } else {
     list()
 }
