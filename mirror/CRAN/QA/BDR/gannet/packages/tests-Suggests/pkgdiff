@@ -1,0 +1,9 @@
+#! /usr/bin/env Rscript
+ref <- "../tests-devel"
+this <- "Suggests"
+source('../pkgdiff.R')
+foo <- dir('/data/ftp/pub/bdr/noSuggests', patt="[.]out$")
+foo <- sub("[.]out$", "", foo)
+stp <- c(foo, readLines('../stoplist2'))
+
+junk <- pkgdiff(stp)

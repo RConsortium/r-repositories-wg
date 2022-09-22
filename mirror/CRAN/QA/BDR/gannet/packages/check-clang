@@ -1,0 +1,26 @@
+#! /bin/csh
+~/R/packages/InUse.R ~/R/test-clang || exit 1
+~/R/packages/InUse.R ~/R/packages/tests-clang || exit 1
+
+set path=(~/bin /usr/local/texbin /usr/local/bin /usr/sbin $path /usr/lib64/openmpi/bin)
+setenv PKG_CONFIG_PATH /usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+cd ~/R/svn/R-devel
+svn up
+env CRAN_RSYNC=/data/gannet/ripley/R/packages tools/rsync-recommended
+make -j20 -C ~/R/R-clang
+~/R/R-clang//bin/Rscript -e 'update.packages(.Library, ask = F)'
+cd R/packages
+#./update
+~/R/packages/revdeps1 ~/R/test-clang ~/R/packages/tests-clang/revdeps.rds
+/data/gannet/ripley/R/R-clang/bin/Rscript unavailable.R
+env DISPLAY=:5 /data/gannet/ripley/R/R-clang/bin/Rscript updates.R
+~/R/packages/revdeps2 ~/R/test-clang ~/R/packages/tests-clang/revdeps.rds
+rm -f ~/R/packages/tests-clang/revdeps.rds
+cd tests-clang
+make unpack
+./script
+cat check_log
+echo 'packaging'
+make package
+echo 'done'
+make process

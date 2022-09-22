@@ -1,0 +1,35 @@
+diff -ru rgl/src/api.cpp rgl.fix/src/api.cpp
+--- rgl/src/api.cpp	2005-08-04 18:19:31.000000000 -0400
++++ rgl.fix/src/api.cpp	2006-02-03 16:15:21.000000000 -0500
+@@ -572,12 +572,12 @@
+   int success = RGL_FAIL;
+   GLdouble* vertex = pixel;
+   int columns = idata[0];
+-
++  GLint gview[4] = { view[0], view[1], view[2], view[3] };
+   Device* device = deviceManager->getAnyDevice();
+ 
+   if ( device ) {
+   	for (int i=0; i<columns; i++) {
+-		gluProject(point[0],point[1],point[2],model,proj,view,
++		gluProject(point[0],point[1],point[2],model,proj,gview,
+ 		vertex,vertex+1,vertex+2);
+ 		vertex[0] /= view[2];
+ 		vertex[1] /= view[3];
+@@ -595,14 +595,14 @@
+   int success = RGL_FAIL;
+   GLdouble* vertex = point;
+   int columns = idata[0];
+-
++  GLint gview[4] = { view[0], view[1], view[2], view[3] };
+   Device* device = deviceManager->getAnyDevice();
+ 
+   if ( device ) {
+   	for (int i=0; i<columns; i++) {
+ 	        pixel[0] *= view[2];
+ 	        pixel[1] *= view[3];
+-		gluUnProject(pixel[0],pixel[1],pixel[2],model,proj,view,
++		gluUnProject(pixel[0],pixel[1],pixel[2],model,proj,gview,
+ 		vertex,vertex+1,vertex+2);
+ 		pixel += 3;
+ 		vertex += 3;

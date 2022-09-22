@@ -1,0 +1,9 @@
+#!/bin/csh
+
+setenv OPENBLAS_NUM_THREADS 4
+
+## orphaned check may need CRAN_package_db()
+#setenv R_CRAN_WEB http://cran.r-project.org
+setenv _R_CHECK_ORPHANED_ true
+
+source ../tests-devel/script

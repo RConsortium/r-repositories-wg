@@ -1,0 +1,4 @@
+rm -f ~/R/packages/$1/*/src/symbols.rds
+rm -f ~/R/packages/$1/*/src/*.so
+rm -f ~/R/packages/$1/*/src/*.mod
+find ~/R/packages/$1 -name \*.o -delete

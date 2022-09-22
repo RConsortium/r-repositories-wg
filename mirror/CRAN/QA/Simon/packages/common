@@ -1,0 +1,63 @@
+#!/bin/sh
+
+# delivers:
+#  rhome
+#  rver
+#  arch, osver, oscode
+#  biname
+
+# get the OS codename
+osver=`uname -r`
+oscode="darwin"
+case $osver in
+    6.*) oscode="jaguar" ;;
+    7.*) oscode="panther" ;;
+    8.*) oscode="tiger" ;;
+    9.*) oscode="leopard" ;;
+    10.*) oscode="snowleopard" ;;
+esac
+
+if [ -n "${FORCE_OSCODE}" ]; then
+    oscode="${FORCE_OSCODE}"
+    echo "-- NOTE: forced oscode=${FORCE_OSCODE}"
+fi
+
+# end here if R is not needed
+if [ -z "${SKIP_R_CHK}" ]; then
+
+if [ -z $RBIN ]; then
+    RBIN=R
+fi
+
+rhome=`$RBIN CMD sh -c 'echo $R_HOME' 2> /dev/null`
+
+if [ -z $rhome ]; then
+    echo "Cannot find $RBIN."
+fi
+
+rver=`echo 'cat(paste(R.version$major,R.version$minor,sep="."))'|$RBIN --vanilla --slave`
+
+arch=`arch`
+if [ $arch == ppc ]; then
+# try to figure out whether we're dealing with ppc64 version of R on ppc arch
+    file $rhome/lib/libR.dylib|grep ppc64
+    if [ $? == 0 ]; then
+	arch=ppc64
+    fi
+fi
+
+biname="$oscode-$arch"
+
+# auto-detect universal build if universal is not set
+if [ -z "$universal" -a -e $rhome/lib/i386 -a -e $rhome/lib/ppc ]; then
+    universal=yes
+fi
+
+if [ "$universal" = yes -o "$universal" = 1 ]; then
+    universal=yes
+    biname="$oscode-universal"
+else
+    universal=no
+fi
+
+fi

@@ -1,0 +1,86 @@
+#!/usr/bin/perl
+#
+# Usage: vrf [-r]
+#
+# -r  re-verify if result was anything but OK
+
+$cp=$0; $cp=~s/vrf$//; require "$cp/common.pl";
+
+use DBI;
+
+$par=shift;
+
+sub src2bin {
+    my $dfn = $_[0];
+    $dfn =~ s:CRAN/src/contrib:$target/bin/$ver:;
+    $dfn =~ s/tar.gz$/tgz/;
+    $dfn;
+}
+
+open OUT, ">$root/$target/Rlib/$ver/00verify.txt";
+
+$dbargs = {AutoCommit => 1,
+           PrintError => 1};
+
+$dbh = DBI->connect("dbi:SQLite:dbname=$root/packages.db","","",$dbargs);
+if ($dbh->err()) { die "ERROR on connect: $DBI::errstr\n"; }
+
+$ins=$dbh->prepare("INSERT OR REPLACE INTO bin (file, lmod, hash, name, version, type, title, depends, suggests, imports, enhances, maintainer, built, verify) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+if ($dbh->err()) { die "ERROR on prepare ins: $DBI::errstr\n"; }
+
+$qb = $dbh->prepare("SELECT lmod, hash, verify FROM bin WHERE file=?;");
+if ($dbh->err()) { die "ERROR on prepare qb: $DBI::errstr\n"; }
+
+$up = $dbh->prepare("UPDATE bin SET verify=? WHERE file=?;");
+if ($dbh->err()) { die "ERROR on prepare up: $DBI::errstr\n"; }
+
+$q = $dbh->prepare("SELECT name, file, type, lmod FROM pkgs;");
+if ($dbh->err()) { die "ERROR on prepare query: $DBI::errstr\n"; }
+$q->execute;
+if ($dbh->err()) { die "ERROR on execute query: $DBI::errstr\n"; }
+while ((@r = $q->fetchrow_array)) {
+    ($name,$file,$type,$slmod) = @r;
+    $bin=src2bin($file);
+    if (! -e $bin) {
+	print OUT "$name|MB\n";
+    } else {
+	$qb->execute($bin);
+	($lmod, $hast, $vrf) = $qb->fetchrow_array;
+	$qb->finish;
+	if ($lmod eq '') {
+	    # register
+	    system "$root/register-pkgs =$bin bin";
+	    $qb->execute($bin);
+	    ($lmod,$hast, $vrf) = qb->fetchrow_array;
+	    $qb->finish;
+	}
+	@st = stat $bin;
+	if ($st[9] eq $lmod && $vrf ne '' && ($par ne '-r' || $vrf eq 'OK')) {
+	    print "$name (unchanged: $vrf)\n";
+	    print OUT "$name|$vrf\n";
+	} else {
+	    system "rm -rf \"$root/$target/Rlib/$ver/$name\" && R CMD INSTALL --pkglock -l \"$root/$target/Rlib/$ver\" \"$bin\"";
+	    if ($? != 0) {
+		print OUT "$name|FI $?\n";
+		$vrf="FI";
+	    } else {
+		if ($type eq 'pkg') {
+		    system "echo 'library($name)' | R_LIBS='$root/$target/Rlib/$ver:$root/$target/extralib/$ver' R --vanilla --no-save --slave";
+		    if ($? != 0) {
+			print OUT "$name|FL $?\n";
+			$vrf="FL";
+		    } else {
+			print OUT "$name|OK\n";
+			$vrf="OK";
+		    }
+		} else {
+		    $vrf="BU";
+		}
+	    }
+	    $up->execute($vrf,$bin);
+	}
+    }
+}
+$q->finish;
+$dbh->disconnect;
+$all='';

@@ -1,0 +1,12 @@
+CC="/home/ripley/developerstudio12.6/bin/cc -xc99 -m64"
+CFLAGS='-O -xlibmieee -xlibmil -xtarget=native -xcache=generic -nofstore'
+FC="/home/ripley/developerstudio12.6/bin/f95 -m64"
+FFLAGS='-O -libmil -xtarget=native -xcache=generic -nofstore'
+CXX="/home/ripley/developerstudio12.6/bin/CC -m64"
+CXXSTD="-std=c++11 -library=stdcpp,CrunG3"
+CXXFLAGS="-O -xlibmil -xtarget=native -xcache=generic -nofstore"
+FCLIBS_XTRA="-lfsu /home/ripley/developerstudio12.6/lib/amd64/libfui.so.2"
+SAFE_FFLAGS="-O -fstore"
+LDFLAGS="-L/usr/local/lib/amd64 -L/opt/csw/lib/amd64"
+R_LD_LIBRARY_PATH="/home/ripley/developerstudio12.6/lib/amd64:/usr/local/Rdev/lib:/usr/local/lib/amd64:/opt/csw/lib/amd64"
+

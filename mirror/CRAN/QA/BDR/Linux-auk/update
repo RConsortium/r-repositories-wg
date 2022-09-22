@@ -1,0 +1,9 @@
+#! /bin/csh
+pushd ~/R/svn
+svn update R-devel R-3-4-branch R-packages R-dev-web
+popd
+~/R/packages/update
+cd ~/R/svn
+setenv CRAN_RSYNC ~/R/packages
+R-devel/tools/rsync-recommended
+

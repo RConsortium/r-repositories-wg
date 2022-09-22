@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+
+$fn=shift;
+$pkg='';
+$pkg=$1 if ($fn=~/([a-zA-Z0-9]+)-00/);
+print "<head>\n<title>$pkg - install result</title>\n</head>\n<body bgcolor=white style='font-family: meta, arial, helvetica; font-size: 11pt'>\n";
+print STDERR "inst2html: \"$fn\"\n";
+open IN, $fn;
+while (<IN>) {
+    s/[\r\n]+//g;
+    s/\/Builds.*\/results//g;
+    s/\/Builds.*\/Rlib//g;
+    s/\/00_pkg_src//;
+    s/dlopen/<b>dlopen<\/b>/g;
+    s/Error(.*)/<b><font color=red>Error<\/font>$1<\/b>/g;
+    s/(Symbol not found:\s+)(.*)/<b><font color=#a04040>$1<\/font><font color=#ff0040>$2<\/font><\/b>/g;
+    s/ERROR/<font color=red><b>ERROR<\/b><\/font>/g;
+    s/WARNING/<font color=red><b>WARNING<\/b><\/font>/g;
+    s/(error):/<font color=#ff4040>$1<\/font>:/gi;
+    s/(warning):/<font color=#802020>$1<\/font>:/gi;
+    s/([a-zA-Z\-_\/]+\.h)([ .:]|$)/<font color=#40a040>$1<\/font>$2/g;
+    s/([a-zA-Z\-_\/]+\.l*o)([ .:]|$)/<font color=#40a0a0>$1<\/font>$2/g;
+    s/([a-zA-Z\-_\/]+\.[SsRrCcMmf]p*\d*)([ .:]|$)/<font color=#a040a0>$1<\/font>$2/g;
+#                s/(\s+)(\-[\-a-zA-Z0-9._\/=]+)(\s|$)/$1<font color=#000080>$2<\/font>$3/g;
+    s/(\/usr\/[a-zA-Z\-0-9._\/]+)/<font color=#000080>$1<\/font>/g;
+    s/(\/bin\/[a-zA-Z\-0-9._\/]+)/<font color=#000080>$1<\/font>/g;
+    s/(\/Developer\/[a-zA-Z\-0-9._\/]+)/<font color=#000080>$1<\/font>/g;
+    s/^(\*{1,2} .*)/<b>$1<\/b>/;
+    s/^(gcc.*)/<tt>$1<\/tt>/;
+    s/(gcc|make|grep|sed|egrep|awk|g\+\+|cc|libtool)(\s+)/<b>$1<\/b>$2/g;
+    print "$_<br>\n";
+}
+close IN;
+print "</body>\n</html>\n";

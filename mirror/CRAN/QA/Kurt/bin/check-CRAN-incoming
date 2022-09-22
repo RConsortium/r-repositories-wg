@@ -1,0 +1,98 @@
+#! /usr/bin/Rscript --default-packages=NULL
+### -*- R -*-
+
+R_scripts_dir <- normalizePath(file.path("~", "lib", "R", "Scripts"))
+
+## <FIXME>
+## Ideally the default flavor could be set in one place.
+flavor <- "gcc"
+##   flavor <- "clang"
+## </FIXME>
+
+args <- commandArgs(trailingOnly = TRUE)
+
+if(any(ind <- grepl("^-f.+", args))) {
+    flavor <- substring(args[ind][1L], 3L)
+    if((substring(flavor, 1L, 1L) == "g") && (!grepl("[-]", flavor))) {
+        ## Handle '-fg' and '-fg/x.y'.
+        version <- unlist(strsplit(flavor, "/", fixed = TRUE))[2L]
+        flavor <- if(!is.na(version))
+            sprintf("gcc-%s", version)
+        else {
+            ## We used to do
+            ##   version <- sub(".*-", "",
+            ##                  system2("readlink", "/usr/bin/gcc",
+            ##                          stdout = TRUE))
+            ## Nowdays, simply assume that there is an R-d-gcc link.
+            "gcc"
+        }
+    }
+    if((substring(flavor, 1L, 1L) == "c") && (!grepl("[-]", flavor))) {
+        ## Handle '-fc' and '-fc/x.y'.
+        version <- unlist(strsplit(flavor, "/", fixed = TRUE))[2L]
+        flavor <- if(!is.na(version))
+            sprintf("clang-%s", version)
+        else
+            "clang"
+    }
+    args <- args[!ind]
+}
+
+R_exe <- normalizePath(file.path("~", "tmp",
+                                 sprintf("R-d-%s", flavor),
+                                 "bin", "R"))
+flavor <- sub("-.*", "", flavor)
+
+## <FIXME>
+## Maybe change to -x?
+pos <- which(args == "--exe")
+if(length(pos)) {
+    R_exe <- normalizePath(args[pos + 1L])
+    args <- args[-c(pos, pos + 1L)]
+    flavor <- NULL
+}
+## </FIXME>
+
+## Avoid 'WARNING: ignoring environment value of R_HOME' ...
+Sys.unsetenv("R_HOME")
+## Make sure that R_LIBS and R_LIBS_SITE are not set.
+Sys.unsetenv(c("R_LIBS", "R_LIBS_SITE"))
+## Re-set R_LIBS_USER to force re-expansion
+Sys.setenv("R_LIBS_USER" =
+           file.path(Sys.getenv("HOME"), "lib/R/Library/%v/%a-%o"))
+## Set R_MAKEVARS_USER according to flavor.
+if(!is.null(flavor)) {
+    suffix <- flavor
+    Sys.setenv("R_MAKEVARS_USER" =
+               file.path(Sys.getenv("HOME"),
+                         ".R",
+                         sprintf("Makevars-%s", suffix)))
+}
+## Use the KH default profile for now.
+Sys.setenv("R_PROFILE_USER" =
+           file.path(Sys.getenv("HOME"), ".R", "Rprofile"))
+
+## <FIXME>
+## Setting this in check_CRAN_incoming.R should be good enough ...?
+##   Sys.setenv("OMP_NUM_THREADS" = 4,
+##              "OMP_THREAD_LIMIT" = 4,
+##              "RCPP_PARALLEL_NUM_THREADS" = 4)
+## </FIXME>
+
+status <-
+    system2(R_exe,
+            c("--no-save", "--no-restore", "--slave",
+              "--args", args),
+            stdin = file.path(R_scripts_dir, "check_CRAN_incoming.R"))
+
+if((status == 0L) && !is.null(flavor)) {
+    new <- file.path(normalizePath("~"), "tmp", "CRAN")
+    old <-
+        tools:::CRAN_check_details(paste0("r-devel-linux-x86_64-debian-",
+                                          flavor))
+    changes <- tools:::check_packages_in_dir_changes(new, old)
+    if(NROW(changes)) {
+        writeLines("\nCheck results changes:")
+        print(changes)
+    }
+}

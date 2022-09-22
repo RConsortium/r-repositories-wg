@@ -1,0 +1,6 @@
+#! /bin/sh
+for d in tests tests-{clang,devel,clang-SAN,gcc-SAN,noLD,ATLAS,MKL,OpenBLAS} ; do
+echo "$d:"
+cd ~/R/packages/$d
+ls -otr *.out | head -1
+done

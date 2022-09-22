@@ -1,0 +1,10 @@
+#!/bin/csh
+source ~/R/packages/common.csh
+
+set path = ( /usr/local/OldSpatial/bin/ $path )
+setenv PKG_CONFIG_PATH /usr/local/OldSpatial/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+setenv R_LIBS ~/R/test-OldSpatial:~/R/test-dev 
+
+foreach f ($*)
+~/R/OldSpatial/bin/R CMD check --extra-arch $f
+end

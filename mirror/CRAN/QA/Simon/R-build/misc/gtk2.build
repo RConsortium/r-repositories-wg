@@ -1,0 +1,41 @@
+'--disable-static' "CC=gcc -std=gnu99 -arch $arch" "CPP=gcc -std=gnu99 -arch $arch -E" "CXX=g++ -arch $arch" "CPPFLAGS=-I${ROOT}/Headers" "LDFLAGS=-L${ROOT}/Libraries"
+ftp://ftp.gnu.org/pub/gnu/gettext/gettext-0.17.tar.gz
+$SERIAL_MAKE
+ftp://ftp.gnome.org/pub/gnome/sources/glib/2.23/glib-2.23.0.tar.bz2
+<<PREMAKE:if [ -n "$ARCH" ]; then ln -sfn /usr/bin/glibtool libtool; if [ "$ARCH" = x86_64 ]; then sed -e 's:^#error.*$::' ../glib-2.23.0/glib/gconvert.c > g-temp && mv g-temp ../glib-2.23.0/glib/gconvert.c; fi; fi >>
+http://nongnu.askapache.com/freetype/freetype-2.3.11.tar.bz2
+
+http://fontconfig.org/release/fontconfig-2.8.0.tar.gz
+--with-default-fonts=/usr/X11R6/lib/X11/fonts --with-add-fonts="/System/Library/Fonts,/Library/Fonts,~/Library/Fonts"
+ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng-1.2.41.tar.gz
+! '--enable-static' '--disable-shared' "CC=gcc -std=gnu89 -arch $arch" "CPP=gcc -std=gnu89 -arch $arch -E" 'CFLAGS=-fPIC -O3' "CXX=g++ -arch $arch" "CPPFLAGS=-I${ROOT}/Headers" "LDFLAGS=-L${ROOT}/Libraries"
+http://cairographics.org/releases/pixman-0.17.2.tar.gz
+
+http://cairographics.org/releases/cairo-1.8.8.tar.gz
+<<PREMAKE:rm -f ../cairo-1.8.8/src/cairo-features.h>>
+ftp://ftp.gnome.org/pub/GNOME/sources/pango/1.26/pango-1.26.1.tar.bz2
+<<PREMAKE:if [ -n "$ARCH" ]; then ln -sfn /usr/bin/glibtool libtool; fi >>
+ftp://ftp.gnome.org/pub/gnome/sources/atk/1.29/atk-1.29.3.tar.bz2
+
+ftp://ftp.gnome.org/pub/gnome/sources/gtk+/2.18/gtk+-2.18.5.tar.bz2
+--without-libjasper<<PREMAKE:if [ -n "$ARCH" ]; then ln -sfn /usr/bin/glibtool libtool; fi >>
+ftp://ftp.gnome.org/pub/GNOME/sources/libglade/2.6/libglade-2.6.4.tar.bz2
+
+ftp://ftp.gnome.org/pub/gnome/sources/libsigc++/2.2/libsigc++-2.2.4.2.tar.bz2
+
+ftp://ftp.gnome.org/pub/gnome/sources/glibmm/2.22/glibmm-2.22.1.tar.bz2
+
+http://cairographics.org/releases/cairomm-1.8.4.tar.gz
+
+ftp://ftp.gnome.org/pub/gnome/sources/pangomm/2.26/pangomm-2.26.0.tar.bz2
+
+ftp://ftp.gnome.org/pub/gnome/sources/gtkmm/2.18/gtkmm-2.18.2.tar.bz2
+
+# NOTES: some GTK+ parts seem to have broken libtool when cross-compiling,
+# so we have to replace it with the system glibtool
+#
+# Also there is an iconv issue in the x86_86 build of glib.
+#
+# Cairo is broken in that it ships with bad cairo-features.h in the tar ball
+# that has higher precedence than the one created by configure so it needs
+# to be removed.

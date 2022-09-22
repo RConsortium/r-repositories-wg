@@ -1,0 +1,8 @@
+#0  2 * * *	/Builds/GUI-build/local/cronjob
+15 0 * * *	/Builds/R-builds/nightly/nightly.update
+# give at least 1h to caladan to compile its ppc binary
+45 1 * * *	/Builds/R-builds/nightly/nightly.build cron
+0  3 * * *	/Builds/packages/sync.bioc.in
+15 4 * * *	/Builds/packages/local/update.pkgs.cron
+# rs backup
+*/5 * * * *	/usr/local/bin/rsrun

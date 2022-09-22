@@ -1,0 +1,4 @@
+if test $# -eq 0; then
+cd ~/R/packages/tests-devel
+fi
+grep 'Status.*ERROR' *.out

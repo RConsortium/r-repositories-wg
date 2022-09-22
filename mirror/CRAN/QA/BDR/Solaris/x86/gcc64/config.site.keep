@@ -1,0 +1,10 @@
+CC="/opt/csw/gcc4/bin/gcc -m64"
+CPPFLAGS=-I/opt/csw/include
+F77="/opt/csw/gcc4/bin/gfortran -m64"
+FPICFLAGS=-fPIC
+CXX="/opt/csw/gcc4/bin/g++ -m64"
+FC="/opt/csw/gcc4/bin/gfortran -m64"
+FCPICFLAGS=-fPIC
+LDFLAGS="-L/opt/csw/gcc4/lib/amd64 -L/opt/csw/lib/amd64"
+SHLIB_LDFLAGS=-shared
+R_LD_LIBRARY_PATH="/opt/csw/gcc4/lib/amd64:/opt/csw/lib/amd64:/opt/csw/lib"

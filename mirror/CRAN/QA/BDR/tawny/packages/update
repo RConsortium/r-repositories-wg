@@ -1,0 +1,7 @@
+rsync -e ssh -rvCtL --delete --include="*.tar.gz" \
+--include="Meta" --include="Meta/*" \
+--include="PACKAGES*" \
+--include="4.1.?" --include="4.1.?/*" --include="4.1.?/*/*" \
+--include="4.1-patched" --include="4.1-patched/*" --include="4.1-patched/*/*" \
+--include="4.2.0" --include="4.2.0/*" --include="4.2.0/*/*" \
+--exclude="*/*" cran.r-project.org:contrib /Users/ripley/R/packages

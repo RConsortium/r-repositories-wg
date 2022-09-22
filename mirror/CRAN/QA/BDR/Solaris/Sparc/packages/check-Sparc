@@ -1,0 +1,30 @@
+#! /bin/csh
+set path=(. ~/bin /usr/local/bin /opt/solarisstudio12.3/bin /usr/xpg4/bin /usr/ccs/bin /usr/bin/X11 /usr/openwin/bin /opt/jdk1.7.0_65/bin /bin /usr/bin /usr/sbin /sbin /usr/sfw/bin /usr/local/texlive/current/bin/sparc-solaris /opt/csw/bin /opt/SUNWhpc/HPC8.2.1c/sun/bin /opt/csw/gcc4/bin)
+
+setenv PKG_CONFIG_PATH /opt/csw/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig
+setenv DISPLAY :5
+setenv RGL_USE_NULL true
+
+setenv LC_CTYPE en_GB.UTF-8
+setenv _R_CHECK_TIMINGS_ 10
+setenv _R_CHECK_INSTALL_DEPENDS_ TRUE
+setenv _R_CHECK_SUGGESTS_ONLY_ TRUE
+setenv _R_CHECK_NO_RECOMMENDED_ TRUE
+setenv _R_CHECK_DEPRECATED_DEFUNCT_ true
+
+
+limit cputime 30m
+
+cd R/packages
+./update
+Rscript updateBioC.R
+env MAKE=gmake GREP=ggrep ~/R/gcc/bin/Rscript updateBioC.R
+Rscript -e 'update.packages(.Library, ask = F)'
+~/R/gcc/bin/Rscript -e 'update.packages(.Library, ask = F)'
+cd tests32
+make install
+#gmake -k -j20 check
+script
+echo 'packaging'
+make package
+echo 'done'

@@ -1,0 +1,4 @@
+#! /bin/csh
+~/R/packages/check-devel
+~/R/packages/check-vg
+~/R/packages/check-patched

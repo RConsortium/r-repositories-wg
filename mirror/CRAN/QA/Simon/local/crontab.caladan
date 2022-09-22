@@ -1,0 +1,6 @@
+#-- blitze rsyncs CRAN at 4:00
+10 4 * * *	/Build/packages/local/fetch-CRAN
+#20 4 * * *	/Build/packages/daily.update
+#-- imac86 runs update at 0:15 and expects results by 1:45
+30 0 * * *	/Builds/R-builds/nightly/cal.nightly
+*/3 * * * *	/usr/local/bin/rsrun

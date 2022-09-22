@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# merges 'special' packages (version-specific Other and Recommended)
+# into the CRAN src/contrib. Warning, it's irreversible as old
+# packages are deleted, so R versions must be built in ascending order
+
+# requires: common rmdup
+
+: ${BASE=/Builds/packages}
+: ${CRAN=$BASE/CRAN}
+
+. $BASE/common
+
+OWD=`pwd`
+
+echo $rver
+
+cd $CRAN
+cp src/contrib/$rver/*/*.tar.gz src/contrib/
+$BASE/rmdup
+
+cd "$OWD"

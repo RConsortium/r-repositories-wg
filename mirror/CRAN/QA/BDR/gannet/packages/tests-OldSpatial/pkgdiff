@@ -1,0 +1,5 @@
+#! /usr/bin/env Rscript
+ref <- "../tests-devel"
+this <- "OldSpatial"
+source('../pkgdiff.R')
+junk <- pkgdiff()

@@ -1,0 +1,2 @@
+PKG_CPPFLAGS='-I/usr/X11R6/include -I/usr/local/include/freetype2'
+PKG_LIBS='-L/usr/X11R6/lib -lX11 -lXrender'

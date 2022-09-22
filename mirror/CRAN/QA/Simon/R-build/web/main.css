@@ -1,0 +1,25 @@
+A:link, A:visited, A:active, A:hover {
+  text-decoration: none; font-weight: bold;
+}
+A:HOVER { color: "c0c0ff"; }
+#SUBTXT { font-size: 10pt; font-family: myriad,meta,arial,helvetica; }
+#MIC { font-size: 4pt; font-family: myriad,meta,arial,helvetica; }
+#H1 { font-size: 12pt; font-family: myriad,meta,arial,helvetica;
+      font-weight: bold; }
+#H2 { font-size: 14pt; font-family: myriad,meta,arial,helvetica;
+      font-weight: bold; }
+
+BODY {
+  font-size: 11pt; 
+  font-family: myriad,meta,arial,helvetica; 
+  aSCROLLBAR-TRACK-COLOR: #3188ff;
+  aSCROLLBAR-3DLIGHT-COLOR: #d2f2ff;
+  SCROLLBAR-HIGHLIGHT-COLOR: #000000;
+  SCROLLBAR-ARROW-COLOR: #d2f2ff;
+  SCROLLBAR-DARKSHADOW-COLOR: #3188ff;
+  SCROLLBAR-BASE-COLOR: #000000;
+ }  
+ALL, P, TD { font-size: 11pt; 
+  font-family: myriad,meta,arial,helvetica; }
+TH { font-size: 12pt; font-family: myriad,meta,arial,helvetica;
+  font-weight: bold; }

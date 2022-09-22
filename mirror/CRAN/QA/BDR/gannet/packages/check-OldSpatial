@@ -1,0 +1,15 @@
+#! /bin/csh
+~/R/packages/InUse.R ~/R/packages/tests-OldSpatial || exit 1
+~/R/packages/InUse.R ~/R/test-dev || exit 1
+
+set path = ( /usr/local/OldSpatial/bin/ /usr/local/texbin /usr/local/bin ~/bin /usr/sbin $path)
+setenv PKG_CONFIG_PATH /usr/local/OldSpatial/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+setenv R_LIBS ~/R/test-OldSpatial:~/R/test-dev 
+
+cd ~/R/svn/R-devel
+svn up
+env CRAN_RSYNC=/data/gannet/ripley/R/packages tools/rsync-recommended
+cd ~/R/OldSpatial
+(make -j20; ./bin/Rscript -e 'update.packages(.Library, ask = F)')
+cd ~/R/packages/tests-OldSpatial
+make all

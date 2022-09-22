@@ -1,0 +1,8 @@
+rsync -e ssh -rvCtL --delete \
+--include="incoming/inspect/*.tar.gz" \
+--include="incoming/pending/*.tar.gz" \
+--include="incoming/pretest/*.tar.gz" \
+--include="incoming/waiting/*.tar.gz" \
+--include="incoming/recheck/*.tar.gz" \
+--exclude="incoming/*/*" \
+cran.r-project.org:incoming .

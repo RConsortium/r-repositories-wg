@@ -1,0 +1,541 @@
+#! /bin/bash
+
+## <NOTE>
+## Maybe change --no-lock to e.g. --pkglock?
+## </NOTE>
+
+## Fully Qualified Domain Name of the system we use for checking.
+FQDN=`hostname -f`
+
+## Default flavor to use.
+R_flavor=r-devel
+## Location of the CRAN mirror root on the local file system.
+case ${FQDN} in
+  aragorn.ci.tuwien.ac.at)
+    CRAN_rsync=/usr/local/src/apps/stat/R ;;
+  *.wu.ac.at)
+    CRAN_rsync=/srv/R/Repositories/CRAN ;;
+  *)
+    CRAN_rsync=/data/Repositories/CRAN ;;
+esac
+## Location gof CRAN's src/contrib on the local file system.
+CRAN_dir=${CRAN_rsync}/src/contrib
+## Default check args.
+check_args_defaults=
+## case ${FQDN} in
+##   xmgyges.wu.ac.at)
+##     check_args_defaults="--no-vignettes"
+##     ;;
+## esac
+## Where everything happens.
+check_dir=~/tmp/R.check
+## Check date in ISO 8601 format.  GNU specific ...
+check_date=`date -Idate`
+check_results_mail_recipients="Kurt.Hornik@wu.ac.at"
+case ${FQDN} in
+  gimli.wu.ac.at)
+    check_results_mail_recipients="Kurt.Hornik@wu.ac.at maechler@stat.math.ethz.ch Uwe.Ligges@R-project.org"
+    ;;
+esac
+check_results_files="SUMMARY check.csv time_c.out time_i.out"
+## Compilers to use.
+## Use configure defaults (gcc/g++/gfortran).
+compilers=
+## Note that (in particular to achieve additional C++ strictness) we
+## prefer to run checks with
+##   CFLAGS = -g -O2 -Wall -pedantic
+##   CXXFLAGS = -g -O2 -Wall -pedantic
+## but use machine-local ~/.R/Makevars for setting this.
+## Additional command line arguments to configure.
+configure_args="--with-blas=no --enable-R-shlib LIBnn=lib"
+## R scripts directory.
+R_scripts_dir=~/lib/R/Scripts
+## R profile for checking.
+R_profile=${R_scripts_dir}/check_profile.R
+## Shell scripts directory.
+sh_scripts_dir=~/lib/bash
+
+## Command line args.
+while test -n "${1}"; do
+  case "${1}" in
+    -r)
+      R_flavor=r-release ;;
+    -p)
+      R_flavor=r-patched ;;
+    -v)
+      case "${2}" in
+        4.*)
+	  compilers="CC=gcc-${2} CXX=g++-${2} F77=gfortran-${2}
+	    FC=gfortran-${2} OBJC=gcc-${2} OBJCXX=gcc-${2}"
+	  ;;
+	3.*)
+          compilers="CC=gcc-${2} CXX=g++-${2} F77=g77-${2}"
+	  ;;
+      esac
+      shift ;;
+  esac
+  shift
+done
+
+## Start a virtual framebuffer X server and use this for DISPLAY so that
+## we can run package tcltk and friends.  We use the PID of the check
+## process as the server number so that the checks for different flavors
+## get different servers.
+PATH=${PATH}:/usr/bin/X11
+get_Xvfb_pid () {
+    ps auxw | grep "Xvfb :${$}" | grep -v grep | awk '{ print $2 }'
+}
+start_Xvfb () {
+    Xvfb :${$} -screen 0 1280x1024x24 &
+    pid=`get_Xvfb_pid`
+    echo ${pid} > ${check_dir}/${R_flavor}/Xvfb.pid
+}
+start_Xvfb_if_necessary () {
+    pid=`get_Xvfb_pid`
+    test -z "${pid}" && start_Xvfb
+}
+export DISPLAY=:${$}
+
+if test -n "${BASH_VERSION}"; then
+  ## No process is allowed more than 10 minutes
+  ulimit -t 600
+fi
+
+export R_BROWSER=false
+export R_PDFVIEWER=false
+
+export _R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_=true
+
+export _R_CHECK_CODETOOLS_PROFILE_="suppressPartialMatchArgs=false"
+
+export _R_CHECK_FORCE_SUGGESTS_=false
+export _R_CHECK_INSTALL_DEPENDS_=true
+export _R_CHECK_SUGGESTS_ONLY_=true
+export _R_CHECK_NO_RECOMMENDED_=true
+
+export _R_CHECK_SUPPRESS_RANDR_MESSAGE_=true
+# export _R_CHECK_WEAVE_VIGNETTES_=no
+
+## And we definitely do not want package-local overrides:
+export _R_CHECK_EXECUTABLES_EXCLUSIONS_=false
+## And we want license checking ...
+export _R_CHECK_LICENSE_=true
+
+## And the additional timings added in R 2.15.0 ...
+export _R_CHECK_TIMINGS_=0
+export _R_CHECK_TEST_TIMING_=yes
+export _R_CHECK_VIGNETTE_TIMING_=yes
+
+## Try using a UTF-8 locale.
+export LANG="en_US.UTF-8"
+## But not for sorting ...
+export LC_COLLATE=C
+
+export R_GC_NGROWINCRFRAC=0.3
+export R_GC_VGROWINCRFRAC=0.3
+
+## Avoid hyperref problems with paper size 'letter'.
+export R_PAPERSIZE=a4
+
+do_cleanup_and_exit () {
+  lamwipe -sessionsuffix ${R_flavor} || true
+  rm -f ${check_dir}/${R_flavor}/check.pid
+  exit ${1-0}
+}
+
+test -d ${check_dir} || mkdir ${check_dir} || do_cleanup_and_exit 1
+cd ${check_dir}
+
+## Structure inside $check_dir: subdirs for each flavor.  Within these,
+## most of the work happens in 'Work', inside which R sources are in
+## 'src', R is built in 'build', and packages are in 'PKGS'.  When done,
+## 'PKGS' is moved up for mirroring, and results are saved in 'Results'.
+test -d ${R_flavor} || mkdir ${R_flavor} || do_cleanup_and_exit 1
+cd ${R_flavor}
+## If there is an old Xvfb/check process remaining, kill it:
+test -f Xvfb.pid && kill -9 `cat Xvfb.pid`
+test -f check.pid && kill -9 `cat check.pid`
+## Start Xvfb.
+start_Xvfb
+echo ${$} > check.pid
+test -d Work || mkdir Work || do_cleanup_and_exit 1
+cd Work
+
+## Update ${R_flavor} sources.
+## Actually, we should check whether flavor of source and target agree.
+test -d src || mkdir src || do_cleanup_and_exit 1
+if test "`hostname`" = mithrandir; then
+  (cd ~/src/apps/R/${R_flavor}/R; tar cf - . ) | ( cd src; tar xf -)
+else
+  ## Argh, rsync is gone (at least for the time being ...).
+  ## We could of course use svn checkout on https://svn.R-project.org/R,
+  ## but how can one get "r-patched" and "r-release" without knowing the
+  ## corresponding branch?  Hence, we get things from CRAN (release) or
+  ## ETHZ, but need to figure out the top-level source dir for the
+  ## unpackaged version somehow (of course, we could also read this from
+  ## the archive).
+  ## (cd src; rsync -rC -t --delete rsync.r-project.org::${R_flavor} .)
+  ## <NOTE>
+  ## Maybe we should use svn checkout for r-devel?
+  ## </NOTE>
+  case "${R_flavor}" in
+    r-devel)
+      url=ftp://ftp.stat.math.ethz.ch/Software/R/R-devel.tar.gz ;;
+    r-patched)
+      ## <NOTE>
+      ## Adjust as needed ...
+      url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
+      ## url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
+      ## </NOTE>
+      ;;
+    r-release)
+      url=http://cran.r-project.org/src/base/R-latest.tar.gz ;;
+  esac
+  mv src src.save
+  (mkdir tmp &&
+    cd tmp &&
+    touch stamp &&
+    wget -O - --retr-symlinks ${url} | tar zxmf - &&
+    entry=`find . -newer stamp -type d -mindepth 1 -maxdepth 1` &&
+    mv ${entry} ../src &&
+    cd .. &&
+    rm -rf src.save tmp) || (rm -rf tmp; mv src.save src)
+fi
+R_VERSION=`cut -f1 -d' ' src/VERSION`
+if test "`cut -f2 -d' ' src/VERSION`" = "Patched"; then
+  R_VERSION=`echo ${R_VERSION} | sed 's/\.[0-9]*$//'`
+  R_VERSION="${R_VERSION}-patched"
+fi
+
+## Link recommended packages.
+(cd src; \
+  CRAN_RSYNC="${CRAN_rsync}" ./tools/rsync-recommended)
+
+## Rebuild R.
+rm -rf build
+mkdir build
+(cd build && ../src/configure ${configure_args} ${compilers} \
+  && make && make check && make pdf) || do_cleanup_and_exit 1
+(cd build/doc/manual && make fullrefman.pdf) || do_cleanup_and_exit 1
+mkdir build/Packages
+R_HOME=`./build/bin/R RHOME`
+R_exe="${R_HOME}/bin/R"
+
+R_base_pkgs=
+if test -f src/share/make/vars.mk; then
+  R_base_pkgs=`grep '^R_PKGS_BASE *=' src/share/make/vars.mk | \
+    sed 's/.*=//'`
+fi
+
+## Packages.
+rm -rf PKGS			# In case there are some leftovers ...
+mkdir PKGS
+cd PKGS
+
+## Add check profile settings.
+## <NOTE>
+## This should work from 2.7.0 onwards ...
+export R_PROFILE_USER=${R_profile}
+## </NOTE>
+## Old style:
+## if test -r "${R_profile}"; then
+##   (echo; cat "${R_profile}") > .Rprofile
+## fi
+
+all_pkgs=
+dir=${CRAN_dir}/${R_VERSION}/Recommended
+if test -d ${dir}; then
+  for f in ${dir}/*.tar.gz; do tar zxf ${f}; done
+  CRAN_vspec_recommended_pkgs=`cd ${dir}; ls *.tar.gz | sed 's/_.*//'`
+  all_pkgs="${all_pkgs} ${CRAN_vspec_recommended_pkgs}"
+fi
+dir=${CRAN_dir}/${R_VERSION}/Other
+if test -d ${dir}; then
+  for f in ${dir}/*.tar.gz; do tar zxf ${f}; done
+  CRAN_vspec_other_pkgs=`cd ${dir}; ls *.tar.gz | sed 's/_.*//'`
+  all_pkgs="${all_pkgs} ${CRAN_vspec_other_pkgs}"
+fi
+
+CRAN_main_pkgs=`cd ${CRAN_dir}; ls *.tar.gz`
+for p in ${R_base_pkgs} \
+         ${CRAN_vspec_recommended_pkgs} \
+	 ${CRAN_vspec_other_pkgs}; do
+  CRAN_main_pkgs=`echo "${CRAN_main_pkgs}" | sed "s/^${p}_.*//"`
+done
+for p in ${CRAN_main_pkgs}; do tar zxf ${CRAN_dir}/${p}; done
+CRAN_main_pkgs=`echo "${CRAN_main_pkgs}" | sed 's/_.*//'`
+all_pkgs="${all_pkgs} ${CRAN_main_pkgs}"
+all_pkgs=`echo "${all_pkgs}" | tr ' ' '\n' | sort | uniq`
+
+. ${sh_scripts_dir}/check_R_stoplists.sh
+
+## For R 2.0.0 or better, we can compute an install order, but only for
+## the CRAN packages in the main area.  This is a *BUG*, and hopefully
+## will be fixed soon.  For the time being, the best we can do is to try
+## installing the version specific packages first ...
+## <FIXME>
+## What is the problem?
+## </FIXME>
+CRAN_vspec_other_pkgs_install_yes=`echo "${CRAN_vspec_other_pkgs}" \
+  | egrep -v "${pkgs_install_fake_regexp}" \
+  | egrep -v "${pkgs_install_no_regexp}"`
+CRAN_main_pkgs_install_yes=`echo "${CRAN_main_pkgs}" \
+  | egrep -v "${pkgs_install_fake_regexp}" \
+  | egrep -v "${pkgs_install_no_regexp}"`
+pkgs_install_yes="${CRAN_vspec_recommended_pkgs} ${CRAN_vspec_other_pkgs_install_yes} ${CRAN_main_pkgs_install_yes}"
+pkgs_install_fake=`echo "${all_pkgs}" | egrep "${pkgs_install_fake_regexp}"`
+pkgs_install_no=`echo "${all_pkgs}" | egrep "${pkgs_install_no_regexp}"`
+## Installation first ...
+## Note that installing to the default library tree updates the HTML
+## indices, which is very time consuming (as we install one package at a
+## time to safeguard against limits on the size of the command line).
+## Hence, we install the packages to a different library tree
+## (${R_HOME}/Packages).
+## Determine what needs to be installed, and the right order for this.
+echo ${pkgs_install_yes} > pkgs_install_yes_by_names.dat
+echo ${pkgs_install_fake} > pkgs_install_fake_by_names.dat
+## The code below assumes that fake installs and their reverse depends
+## are set up correctly.  We could use R code for improving this, but
+## then we would need to feed things back to the shell db with the check
+## flags ...
+## Hence, we first compute everything needed for installing the packages
+## to be fully installed, and then what is *additionally* needed for the
+## fake installs (which might include non-CRAN depends).
+${R_exe} --vanilla --slave <<-EOF
+	source("${R_scripts_dir}/check.R")
+	dir <- file_path_as_absolute(getwd())
+	write_PACKAGES(dir, unpacked = TRUE)
+	available <- available_packages_in_local_repositories(dir)
+	p_yes <- scan("pkgs_install_yes_by_names.dat", character(),
+	              quiet = TRUE)
+	o_yes <- find_install_order(p_yes, dir, available)
+	writeLines(o_yes[["out"]], "pkgs_install_yes_by_order.dat")
+	writeLines(o_yes[["bad"]], "pkgs_install_yes_uninstallable.dat")
+	p_fake <- scan("pkgs_install_fake_by_names.dat", character(),
+	               quiet = TRUE)
+	o_fake <- find_install_order(p_fake, dir, available, FALSE)
+	writeLines(setdiff(o_fake[["out"]], o_yes[["out"]]),
+	           "pkgs_install_fake_by_order.dat")
+	writeLines(o_fake[["bad"]], "pkgs_install_fake_uninstallable.dat")
+	EOF
+
+pkgs_install_yes=`cat pkgs_install_yes_by_order.dat`
+## Create install time stamps first.
+for p in ${pkgs_install_yes}; do
+  case "${p}" in
+    /*) continue ;;
+  esac
+  touch ${p}/.install_timestamp
+done  
+for p in ${pkgs_install_yes}; do
+  start_Xvfb_if_necessary
+  pname=`basename "${p}" | sed 's/_.*//'`
+  echo -n "${pname}: " >> ../time_i.out
+  /usr/bin/time -o ../time_i.out -a \
+    env R_LIBS="${R_HOME}/Packages" \
+      ${R_exe} CMD INSTALL --no-lock ${p} >${pname}-install.out 2>&1
+done
+## <NOTE>
+## Need to actually provide fake installs (otherwise, dependencies
+## cannot be honored).  Checking with --install=fake fake-installs
+## again, which could perhaps be eliminated.
+pkgs_install_fake=`cat pkgs_install_fake_by_order.dat`
+## Create install time stamps first.
+for p in ${pkgs_install_fake}; do
+  case "${p}" in
+    /*) continue ;;
+  esac
+  touch ${p}/.install_timestamp
+done  
+for p in ${pkgs_install_fake}; do
+  pname=`basename "${p}" | sed 's/_.*//'`
+  echo -n "${pname}: " >> ../time_i.out
+  /usr/bin/time -o ../time_i.out -a \
+    env R_LIBS="${R_HOME}/Packages" \
+      ${R_exe} CMD INSTALL --no-lock --fake ${p} >${pname}-install.out 2>&1
+done
+## </NOTE>
+
+## And now the testing ...
+
+## Start/customize distributed computing environments.
+## Running Rmpi calls lamboot so that at the end we should clean up by
+## calling lamwipe.  Of course, the LAM RTE should be check process
+## specific, which can be accomplished via LAM_MPI_SESSION_SUFFIX.
+export LAM_MPI_SESSION_SUFFIX=${R_flavor}
+
+## <NOTE>
+## Could also try eliminating the non local packages which are not to be
+## checked by something like
+##   pkgs_install_yes=`echo "${pkgs_install_yes}" | sed '/\/.*/d'`
+## And similarly for pkgs_install_fake.
+## </NOTE>
+for p in ${pkgs_install_yes}; do
+  case "${p}" in
+    /*) continue ;;
+  esac
+  start_Xvfb_if_necessary
+  args=`get_check_args ${p}`
+  echo -n "${p}: " >> ../time_c.out
+  /usr/bin/time -o ../time_c.out -a \
+    env R_LIBS="${R_HOME}/Packages" \
+    ${R_exe} CMD check \
+    --install="check:${p}-install.out" \
+    --library="${R_HOME}/Packages" \
+    ${args} ${check_args_defaults} ${p}
+  ## if test -n "${args}"; then
+  ##   echo "* using check arguments '${args}'" \
+  ##     >> ${p}.Rcheck/00check.log
+  ## fi
+  rm -f ${p}-install.out
+done
+for p in ${pkgs_install_fake}; do
+  case "${p}" in
+    /*) continue ;;
+  esac
+  start_Xvfb_if_necessary
+  echo -n "${p}: " >> ../time_c.out
+  /usr/bin/time -o ../time_c.out -a \
+    env R_LIBS="${R_HOME}/Packages" \
+    ${R_exe} CMD check --install=fake ${p}
+  ## echo "* using check arguments '--install=fake'" \
+  ##   >> ${p}.Rcheck/00check.log
+done
+for p in ${pkgs_install_no}; do
+  start_Xvfb_if_necessary
+  echo -n "${p}: " >> ../time_c.out
+  /usr/bin/time -o ../time_c.out -a \
+    env R_LIBS="${R_HOME}/Packages" \
+    ${R_exe} CMD check --install=no ${p}
+  ## echo "* using check arguments '--install=no'" \
+  ##   >> ${p}.Rcheck/00check.log
+done
+## ... and copy the package/bundle DESCRIPTION metadata over to the
+## directories with the check results.
+for d in *.Rcheck; do
+  /usr/bin/install -m 644 `basename ${d} .Rcheck`/DESCRIPTION \
+    ${d}/00package.dcf
+done
+
+## Summary and check db
+get_dcf_field () {
+  ## Get one field including all continuation lines from a DCF file.
+  ## Usage:
+  ##   get_dcf_field FIELD FILE
+  ws="[ 	]"		# space and tab
+  (sed -n "/^${1}:/,/^[^ ]/{p;}" ${2} | \
+    sed -n "/^${1}:/{s/^${1}:${ws}*//;p;}
+            /^${ws}/{s/^${ws}*//;p;}") |
+    sed "s/[ 	]*$//"
+}
+
+## Summaries.
+
+cd ${check_dir}/${R_flavor}
+
+## Save old check results.
+for f in ${check_results_files}; do
+  test -f "${f}.prev" && rm -f "${f}.prev"
+  test -f "${f}"      && mv "${f}" "${f}.prev"
+done
+
+for d in Results Results/${check_date}; do
+  test -d ${d} || mkdir ${d} || do_cleanup_and_exit 1
+done
+
+test -d PKGS.prev && rm -rf PKGS.prev
+test -d PKGS      && mv PKGS PKGS.prev
+mv Work/PKGS PKGS
+
+## Move timings up.
+mv Work/time_c.out time_c.out
+mv Work/time_i.out time_i.out
+
+cd ${check_dir}/${R_flavor}/PKGS
+
+## Create check.csv.
+(echo "Package,Version,Priority,Maintainer,Status,Comment"
+for d in *.Rcheck; do
+  package=`basename ${d} .Rcheck`
+  version=`get_dcf_field Version ${package}/DESCRIPTION | head -1`
+  priority=`get_dcf_field Priority ${package}/DESCRIPTION | head -1`
+  maintainer=`get_dcf_field Maintainer ${package}/DESCRIPTION | \
+    head -1 | sed 's/\\"/""/g'`
+  warnings=`grep 'WARNING$' ${d}/00check.log`
+  errors=`grep 'ERROR$' ${d}/00check.log`
+  if test -n "${errors}"; then
+    status=ERROR
+  elif test -n "${warnings}"; then
+    status=WARN
+  else
+    status=OK
+  fi
+  args=`get_check_args ${package}`
+  if test -n "${args}"; then args="[${args}]"; fi
+  echo "${package},${version},${priority},\"${maintainer}\",${status},${args}"
+done) | sed 's// /' > ../check.csv
+
+## Create SUMMARY.
+(for d in *.Rcheck; do
+  package=`basename ${d} .Rcheck`
+  if test "${R_flavor}" = r-release; then
+    problems=`egrep -e 'ERROR$' ${d}/00check.log`
+  else
+    problems=`egrep -e \
+      '(^\*   Rd files|^\*   non-standard|(WARNING|ERROR)$)' \
+      ${d}/00check.log`
+  fi
+  if test -n "${problems}"; then
+    echo "${package}"
+    egrep -e '^Maintainer:' "${package}/DESCRIPTION"
+    echo "${problems}"
+  fi
+done) > ../SUMMARY
+
+cd ${check_dir}/${R_flavor}
+
+## Save result summaries. 
+for f in ${check_results_files}; do
+  cp "${f}" "Results/${check_date}"
+done
+
+## And notify of differences ...
+for f in check.csv; do
+  if test -f "${f}.prev"; then
+    diff "${f}.prev" "${f}" > "${f}.diff"
+    test -s "${f}.diff" || rm -f "${f}.diff"
+  fi
+  if test -f "${f}.diff"; then
+    ${R_exe} --vanilla --slave <<-EOF
+	source("${R_scripts_dir}/check.R")
+	db <- check_results_diffs(file.path("${check_dir}", "${R_flavor}"))
+	sink("${f}.diff")
+	writeLines(c("Changes in check status (S) and/or version (V)",
+	             do.call(sprintf,
+	                     c(list("using R %s.%s (%s-%s-%s r%s):\n"),
+	                       R.version[c("major", "minor", "year",
+	                                   "month", "day", "svn rev")]))))
+	print(db)
+	sink()
+	EOF
+    env REPLYTO=Kurt.Hornik@R-project.org \
+      mail -s "[CRAN-check] ${R_flavor}/`hostname` ${f} changes on `date -Iseconds`" \
+      ${check_results_mail_recipients} < "${f}.diff"
+    rm -f "${f}.diff"
+  fi
+done
+
+## Manuals
+
+test -d Manuals.prev && rm -rf Manuals.prev
+test -d Manuals      && mv Manuals Manuals.prev
+mkdir Manuals
+cp Work/build/doc/manual/*.html Manuals
+cp Work/build/doc/manual/*.pdf  Manuals
+
+do_cleanup_and_exit
+
+### Local Variables: ***
+### mode: sh ***
+### sh-basic-offset: 2 ***
+### End: ***

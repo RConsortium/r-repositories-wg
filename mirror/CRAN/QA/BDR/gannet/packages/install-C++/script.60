@@ -1,0 +1,27 @@
+#!/bin/csh
+setenv DISPLAY :5
+limit cputime 30m
+setenv OMP_THREAD_LIMIT 2
+
+setenv _R_CHECK_FORCE_SUGGESTS_ false
+setenv LC_CTYPE en_GB.utf8
+setenv RMPI_INCLUDE /usr/include/openmpi-x86_64
+setenv RMPI_LIB_PATH /usr/lib64/openmpi/lib
+setenv RMPI_TYPE OPENMPI
+setenv R_BROWSER false
+setenv R_PDFVIEWER false
+setenv _R_CHECK_INSTALL_DEPENDS_ true
+setenv _R_CHECK_SUGGESTS_ONLY_ true
+setenv _R_CHECK_NO_RECOMMENDED_ true
+
+setenv MOSEKLM_LICENSE_FILE "/data/gannet/ripley/Sources/mosek/6/licenses/mosek.lic"
+setenv PKG_MOSEKHOME "/data/gannet/ripley/Sources/mosek/6/tools/platform/linux64x86"
+setenv PKG_MOSEKLIB "mosek64"
+setenv LD_LIBRARY_PATH $PKG_MOSEKHOME/bin
+
+setenv WNHOME /usr/share/wordnet-3.0
+
+
+
+mkdir -p Libs
+nohup make -j25 -k -f Makefile.60 check >&! check_log

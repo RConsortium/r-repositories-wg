@@ -1,0 +1,5 @@
+#! /usr/bin/env Rscript
+ref <- "../tests-devel"
+this <- "noLD"
+source('../pkgdiff.R')
+junk <- pkgdiff()

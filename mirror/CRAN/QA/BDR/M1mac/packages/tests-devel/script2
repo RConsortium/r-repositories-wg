@@ -1,0 +1,29 @@
+#!/bin/csh
+setenv DISPLAY :5
+limit cputime 30m
+
+setenv _R_CHECK_FORCE_SUGGESTS_ FALSE
+setenv LC_CTYPE en_GB.UTF-8
+setenv R_BROWSER false
+setenv R_PDFVIEWER false
+setenv OMP_NUM_THREADS 2
+setenv _R_CHECK_INSTALL_DEPENDS_ true
+setenv _R_CHECK_SUGGESTS_ONLY_ true
+setenv _R_CHECK_NO_RECOMMENDED_ true
+setenv _R_CHECK_TIMINGS_ 10
+
+setenv _R_CHECK_LIMIT_CORES_ true
+setenv _R_CHECK_VIGNETTES_SKIP_RUN_MAYBE_ true
+setenv _R_CHECK_TESTS_NLINES_ 0
+setenv _R_CHECK_VIGNETTES_NLINES_ 0
+
+setenv _R_CHECK_ELAPSED_TIMEOUT_ 30m
+setenv _R_CHECK_INSTALL_ELAPSED_TIMEOUT_ 120m
+setenv _R_CHECK_TESTS_ELAPSED_TIMEOUT_ 90m
+setenv _R_CHECK_BUILD_VIGNETTES_ELAPSED_TIMEOUT_ 90m
+
+setenv JAVA_HOME /Users/ripley/jdk11.0.9.1-macos_aarch64/zulu-11.jdk/Contents/Home
+
+setenv WNHOME /usr/local/wordnet-3.1
+
+nohup make -j5 -k check >>& check_log

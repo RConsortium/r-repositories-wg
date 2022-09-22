@@ -1,0 +1,4 @@
+#!/bin/sh
+cp -pr /data/ftp/pub/bdr/memtests/*.csv /data/gannet/Rlogs/memtests
+rm -rf /data/gannet/Rlogs/noLD
+cp -pr /data/ftp/pub/bdr/noLD /data/gannet/Rlogs

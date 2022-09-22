@@ -1,0 +1,6 @@
+#!/bin/csh
+source /data/gannet/ripley/R/packages/common.csh
+setenv _R_CHECK_PKG_SIZES_ false
+setenv LC_CTYPE en_GB
+
+nohup make -j30 -k check >&! check_log

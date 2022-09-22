@@ -1,0 +1,194 @@
+#!/usr/bin/perl
+# build GTK+ from scratch for Mac OS X into a framework as cleanly as possible
+# (run as "UPDATE=1 ./build" to resume an interrupted build)
+# (use ARCH to override the architecture, e.g "ARCH=ppc ./build")
+#
+# Author: Simon Urbanek <simon.urbanek@r-project.org>
+#
+#$Id: build 2409 2009-12-16 21:37:33Z urbaneks $
+
+#---- Default setup:
+$root="/Library/Frameworks/GTK+.framework";
+$ver="2.18.X11";  # <-- adjust as you please
+
+$bdir=`pwd`; $bdir=~s/[\r\n]+//g;
+$buildfile="gtk2.build";
+
+#---- no need to modify anything beyond this point ---
+
+if ( ! -e $buildfile ) {
+    print STDERR "\nERROR: missing '$buildfile' config file\n\n";
+    exit 1;
+}
+
+$gtkver="2.18.0"; # just a fallback, we'll update this from the GTK+ tar ball
+
+open IN, $buildfile;
+
+sub sys {
+    system $_[0];
+    if ($? == -1) {
+        print "system $_[0]\nERROR: failed to execute: $!\n";
+        exit 1;
+    } elsif ($? & 127) {
+        printf "system $_[0]\nERROR: died with signal %d, %s coredump\n",
+        ($? & 127),  ($? & 128) ? 'with' : 'without';
+        exit 2;
+    } else {
+        $ev=$? >> 8;
+        if ($ev != 0) {
+            printf "system $_[0]\nERROR: exited with value %d\n", $? >> 8;
+            exit 3;
+        }
+    }
+    1;
+}
+
+$arch=$ENV{ARCH};
+$arch=`arch` if ($arch eq '');
+$arch=~s/[\r\n]+//g;
+print "Architecture: $arch\n";
+
+if ($ENV{ARCH} ne '') {
+    $chost="--host=$arch-apple-darwin".`uname -r`; chomp $chost;
+    $chost.=" ";
+    $chost=~s/i386/i686/;
+    $chost=~s/ppc/powerpc/;
+    print "Using additional host flag: $chost\n";
+}
+
+$CC=$ENV{CC};
+$CC='gcc' if ($CC eq '');
+$CXX=$ENV{CXX};
+$CXX='g++' if ($CXX eq '');
+$MAKE=$ENV{MAKE};
+$MAKE='make' if ($MAKE eq '');
+print "Tools: cc=$CC, cxx=$CXX, make=$MAKE\n";
+
+if ($ENV{UPDATE} ne '') {
+    print "Update requested, checking versions...\n";
+    if (! -e "$root/Versions/$ver/Resources/bin") {
+	print " ** $ver not present, forcing clean build\n";
+    } else {
+	print " - OK, performing update build\n";
+	$UPDATE=1;
+    }
+}
+
+if ($UPDATE == 0) {
+    sys "rm -rf $root/Versions/$ver";
+    sys "mkdir -p $root $root/Versions/$ver/Resources/bin";
+    system "rm -rf $bdir/OK-* $bdir/build-script-* $bdir/bld"; # clean up from previous builds
+}
+# the symlinks must be correct even if we perform an update
+sys "ln -sfn $ver $root/Versions/Current";
+sys "ln -sfn Versions/Current/Resources $root/Resources";
+sys "ln -sfn Resources/include $root/Headers";
+sys "ln -sfn Resources/lib $root/Libraries";
+
+#$prefix="$root/Resources"; # non-versioned root
+$prefix="$root/Versions/$ver/Resources"; # versioned root
+$cpus=`sysctl -n hw.ncpu` + 0; $cpus=8 if ($cpus < 1);
+$defaultmj="-j$cpus";
+$makef='';
+
+$basic=<IN>; chop $basic;
+
+if ( ! -e "$root/Versions/$ver/Resources/lib/pkgconfig/libxml-2.0.pc" ) {
+    # create libxml-2.0 system library stub
+    $xmlver='2.6.16'; # this is the version reported by Tiger and Leopard
+    #$xmldv=`grep 'define LIBXML_DOTTED_VERSION' /usr/include/libxml2/libxml/xmlversion.h`;
+    #$xmlver=$1 if ($xmldv=~/\"(.*)\"/);
+    system "mkdir -p $root/Versions/$ver/Resources/lib/pkgconfig 2>/dev/null";
+    open LX, ">$root/Versions/$ver/Resources/lib/pkgconfig/libxml-2.0.pc";
+    print LX 'prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include/libxml2
+
+Name: libxml-2.0
+Description: libxml2 system stub pc
+Version: '.$xmlver.'
+Libs: -lxml2
+Cflags: -I${includedir}
+';
+    close LX;
+}
+
+sub build {
+ my ($fn);
+ $fn=$_[0];
+ $tar="tar fxz";
+ $tar="tar fxj" if ($fn=~/.tar.bz2/);
+ $td=$fn;
+ $td=~s/.*\///;
+ $td=~s/.tar.gz//;
+ $td=~s/.tar.bz2//;
+ print "$fn -> $td\n";
+ if ($UPDATE > 0 && -e "$bdir/OK-$td") {
+     print " - already built, skipping\n";
+     return 1 
+ }
+ chdir "$bdir";
+ system "rm -rf bld; mkdir bld";
+ open OUT, ">build-script-$td.sh";
+ $inst="&& make install";
+ $preconf="$preconf && \\\n" if ($preconf ne '');
+ $premake="$premake && \\\n" if ($premake ne '');
+ $inst='' if ($NOINST > 0);
+ print OUT "#!/bin/sh\nROOT=$root\nexport ROOT\narch=$arch\nexport arch\nPATH=$root/Resources/bin:\$PATH\nexport PATH\nPKG_CONFIG_PATH=$root/Resources/lib/pkgconfig\nexport PKG_CONFIG_PATH\nGCC='$CC'\nexport GCC\nGCXX='$CXX'\nexport GCXX\nMAKE='$MAKE'\nexport MAKE\ncd $bdir && $tar $fn && \\\n( if [ -e '$bdir/$td.patch' ]; then cd '$bdir/$td'; patch -p1 < '$bdir/$td.patch'; fi ) && \\\n cd $bdir/bld && \\\n${preconf}../$td/configure ${chost}'--prefix=$prefix' $_[1] && \\\n${premake}make $makej $makef $inst && \\\necho '$fn' > $bdir/OK-$td\n";
+ close OUT;
+ sys "sh $bdir/build-script-$td.sh";
+}
+
+if ($UPDATE == 0 || ! -e "$root/Resources/bin/pkg-config" ) {
+  # buid pkg-config first
+  sys "cd $bdir && if [ ! -e pkg-config-0.23.tar.gz ]; then curl -O http://pkg-config.freedesktop.org/releases/pkg-config-0.23.tar.gz; fi";
+  $NOINST=1;
+  build "pkg-config-0.23.tar.gz", "'--enable-static' 'CC=$CC -arch $arch' 'CPP=$CC -arch $arch -E' 'CXX=$CC -arch $arch' '--disable-shared' 'CPPFLAGS=-I$root/Headers' 'LDFLAGS=-L$root/Libraries'";
+  sys "cp $bdir/bld/pkg-config $root/Resources/bin";
+  $NOINST=0;
+}
+
+while (<IN>) {
+    chop;
+    next if (/^#/);
+    $url=$_; 
+    $cf=<IN>;
+    chop $cf;
+    $makej=$defaultmj;
+    # $SERIAL_MAKE means that the package cannot be build with -j
+    if ($cf=~/\$SERIAL_MAKE/) { $cf=~s/\$SERIAL_MAKE//; $makej=''; }
+    $premake=''; $preconf='';
+    if ($cf=~/<<PREMAKE:(.*?)>>/) { $premake=$1; $cf=~s/<<PREMAKE:.*?>>//; }
+    if ($cf=~/<<PRECONF:(.*?)>>/) { $preconf=$1; $cf=~s/<<PRECONF:.*?>>//; }
+    $fn=$url; $fn=~s/.*\///;
+    sys "cd $bdir && if [ ! -e $fn ]; then echo 'downloading $fn'; curl -O $url; fi";
+    $flags="$basic $cf";
+    $flags=$1 if ($cf =~ /^\!(.*)/); # leading ! means replace all flags
+    $gtkver=$1 if ($url=~/\/gtk\+\-(.*)\.tar/);
+    build $fn, $flags;
+}
+close IN;
+
+open PL, ">$root/Resources/Info.plist";
+print PL '<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+ <key>CFBundleIdentifier</key>
+ <string>org.gtk.gtk-framework</string>
+ <key>CFBundleInfoDictionaryVersion</key>
+ <string>6.0</string>
+ <key>CFBundleName</key>
+ <string>GTK</string>
+ <key>CFBundlePackageType</key>
+ <string>FMWK</string>
+ <key>CFBundleVersion</key>
+ <string>'.$gtkver.'</string>
+</dict>
+</plist>
+';
+close PL;
+
+print "\nDONE - GTK+ $gtkver\n";

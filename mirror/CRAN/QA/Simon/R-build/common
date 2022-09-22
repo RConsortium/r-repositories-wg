@@ -1,0 +1,43 @@
+#!/bin/sh
+
+ARCH=`arch`
+osver=`uname -r`
+if [ -z "${oscode}" ]; then
+    oscode="darwin"
+    case $osver in
+	5.*) oscode="puma" ;;
+	6.*) oscode="jaguar" ;;
+	7.*) oscode="panther" ;;
+	8.*) oscode="tiger" ;;
+	9.*) oscode="leopard" ;;
+	10.*) oscode="snowleopard" ;;
+    esac
+fi
+
+configarch="$ARCH"
+texarch="$ARCH"
+case "$ARCH" in
+    ppc*)
+	configarch=powerpc
+	texarch=powerpc
+	;;
+    i?86)
+	configarch=i686
+	texarch=i386
+	;;
+esac
+
+: ${TNAME="$oscode-$ARCH"}
+
+# verify that no packagess are being checked
+PLOCKPATH=/Builds/packages/lock.checking
+if [ -e $PLOCKPATH ]; then
+    LPID=`cat $PLOCKPATH`
+    if ps -p $PLOCKPATH|grep 'mk\.chk'; then
+        echo "**ERROR: package check is in progress, pid $LPID." &1>2
+	exit 1
+    else
+        echo "Stale lock (packages) for pid $LPID, removing"
+        rm -f $PLOCKPATH
+    fi
+fi

@@ -1,0 +1,8 @@
+#!/bin/csh
+source /data/gannet/ripley/R/packages/common.csh
+#setenv _R_CHECK_PKG_SIZES_ false
+
+#setenv R_CRAN_WEB http://cran.r-project.org
+
+nohup make -j30 -k check >&! check_log
+

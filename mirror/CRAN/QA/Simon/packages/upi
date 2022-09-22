@@ -1,0 +1,77 @@
+#!/bin/sh
+
+if [ -z "$1" -o "$1" = '-h' ]; then
+    echo ''
+    echo "  Usage: $0 tars"
+    echo "         $0 <oscode> <x.y>"
+    echo ''
+    exit
+fi
+
+ROOT=/Builds/packages
+tars=`ls -d $ROOT/CRAN/src/contrib/*.tar.gz`
+
+if [ "$1" = tars ]; then
+    for tar in $tars; do
+	pkg=`echo $tar | sed -e 's:.*/::' -e 's:_.*::'`
+	mtime=`stat -f '%m' $tar`
+	if [ -n "$mtime" ]; then curl -S "http://ginaz/cgi-bin/pkg?action=set&pkg=$pkg&key=tar.mtime&value=$mtime"; fi
+        #echo "http://ginaz/cgi-bin/pkg?action=set&pkg=$pkg&key=tar.mtime&value=$mtime"
+	echo "$pkg: $mtime"
+	ver=`tar fxzO "$tar" "$pkg/DESCRIPTION" | sed -n 's/^Version:[ ]*//p'`
+	if [ -n "$ver" ]; then curl -S "http://ginaz/cgi-bin/pkg?action=set&pkg=$pkg&key=tar.ver&value=$ver"; fi
+	echo "$pkg: $ver"
+    done
+else
+    if [ -z "$2" ]; then
+	echo "ERROR: missing R version (try $0 -h)"
+	exit 1
+    fi
+    SV="$2"
+    oscode="$1"
+    RLIB="$ROOT/$1-universal/Rlib/$2"
+    BIN="$ROOT/$1-universal/bin/$2"
+    RES="$ROOT/$1-universal/results/$2"
+    
+    if [ -e "$BIN" -a -z "$SKIP_BIN" ]; then
+	bins=`ls -d $BIN/*.tgz`
+	for bin in $bins; do
+	    pkg=`echo $bin | sed -e 's:.*/::' -e 's:_.*::'`
+	    if [ -n "$pkg" ]; then
+		curl -S "http://ginaz/cgi-bin/pkg?action=set&pkg=$pkg&key=$oscode-$SV.bin&value=true"
+		echo "$pkg: binary"
+	    fi
+	done
+    fi
+    
+    if [ -e "$RLIB" -a -z "$SKIP_RLIB" ]; then
+	rlibs=`ls -d $RLIB/*`
+	for rlib in $rlibs; do
+	    if [ -e "$rlib/DESCRIPTION" ]; then
+		pkg=`basename $rlib`
+		if [ -n "$pkg" ]; then
+		    curl -S "http://ginaz/cgi-bin/pkg?action=set&pkg=$pkg&key=$oscode-$SV.rlib&value=true"
+		    echo "$pkg: installed"
+		fi
+	    fi
+	done
+    fi
+    
+    if [ -e "$RES" -a -z "$SKIP_RES" ]; then
+	ress=`ls -d $RES/*.chkinfo`
+	for res in $ress; do
+	    pkg=`awk -F\| '{print $1}' $res`
+	    err=`awk -F\| '{print $4}' $res`
+	    war=`awk -F\| '{print $5}' $res`
+	    not=`awk -F\| '{print $6}' $res`
+	    if [ -n "$pkg" ]; then
+		stat=OK
+		if [ "$not" = yes ]; then stat=NOTE; fi
+		if [ "$war" = yes ]; then stat=WARN; fi
+		if [ "$err" = yes ]; then stat=ERR; fi
+		curl -S "http://ginaz/cgi-bin/pkg?action=set&pkg=$pkg&key=$oscode-$SV.chk&value=$stat"
+		echo "$pkg: $stat"
+	    fi
+	done
+    fi
+fi

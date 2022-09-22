@@ -1,0 +1,11 @@
+#CC="clang -target x86_64-apple-macos10.15"
+CC="clang -arch x86_64"
+OBJC=$CC
+FC="/usr/local/gfortran/bin/gfortran -mtune=native -mmacosx-version-min=10.13"
+#CXX="clang++ -target x86_64-apple-macos10.15"
+CXX="clang++ -arch x86_64"
+CFLAGS="-g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion"
+
+CPPFLAGS=-I/opt/R/x86_64/include
+LDFLAGS=-L/opt/R/x86_64/lib
+R_LD_LIBRARY_PATH=/opt/R/x86_64/lib

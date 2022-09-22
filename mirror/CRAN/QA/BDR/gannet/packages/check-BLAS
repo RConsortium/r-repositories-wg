@@ -1,0 +1,9 @@
+#! /bin/csh
+~/R/packages/InUse.R ~/R/packages/tests-BLAS || exit 1
+~/R/packages/InUse.R ~/R/test-dev || exit 1
+
+set path=(~/bin /usr/local/texbin /usr/local/bin /usr/local/texbin ~/bin /usr/sbin $path)
+setenv PKG_CONFIG_PATH /usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+
+cd ~/R/packages/tests-BLAS
+make all

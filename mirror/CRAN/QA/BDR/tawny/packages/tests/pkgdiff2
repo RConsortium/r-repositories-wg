@@ -1,0 +1,27 @@
+#! /usr/bin/env Rscript
+pkgdiff <- function(from, to)
+{
+    clean <- function(txt)
+    {
+        txt <- grep("using platform", txt, useBytes = TRUE, invert = TRUE, value = TRUE)
+        txt <- grep("(^\\* using R|real.*user.*sys)", txt, useBytes = TRUE, invert = TRUE, value = TRUE)
+        gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt)
+    }
+
+    left <- clean(readLines(from, warn = FALSE))
+    right <- clean(readLines(to, warn = FALSE))
+right <- sub("/tests-devel/", "/tests/", right, useBytes=TRUE)
+    if(length(left) != length(right) || !all(left == right)) {
+        cat("\n*** ", from, "\n", sep="")
+        writeLines(left, a <- tempfile("Rdiffa"))
+        writeLines(right, b <- tempfile("Rdiffb"))
+        system(paste("diff -bw", shQuote(a), shQuote(b)))
+    }
+}
+
+l1 <- Sys.glob("*.out")
+l2 <- Sys.glob("../tests-keep/*.out")
+l3 <- basename(l2)
+options(stringsAsFactors = FALSE)
+m <- merge(data.frame(x=l1), data.frame(x=l3, y=l2))[,1]
+mm <- lapply(m, function(x) pkgdiff(x, file.path("../tests-devel", x)))

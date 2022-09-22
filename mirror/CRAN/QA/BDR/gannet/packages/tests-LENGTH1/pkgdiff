@@ -1,0 +1,5 @@
+#! /usr/bin/env Rscript
+ref <- "../tests-LENGTH1-keep"
+this <- NULL
+source('../pkgdiff.R')
+junk <- pkgdiff(readLines('../stoplist3'))

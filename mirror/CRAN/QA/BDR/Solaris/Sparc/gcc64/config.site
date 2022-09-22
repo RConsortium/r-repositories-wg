@@ -1,0 +1,12 @@
+CC="/opt/csw/bin/gcc -m64 -mcpu=niagara2"
+CPPFLAGS=-I/opt/csw/include
+F77="/opt/csw/bin/gfortran -m64 -mcpu=niagara2"
+CXX="/opt/csw/bin/g++ -m64 -mcpu=niagara2"
+FC="/opt/csw/bin/gfortran -m64 -mcpu=niagara2"
+LDFLAGS="-L/usr/local/lib/sparcv9 -L/opt/csw/lib/sparcv9"
+
+JAVA_HOME=/opt/jdk1.7.0_65/jre
+JAVA_CPPFLAGS="-I${JAVA_HOME}/../include -I${JAVA_HOME}/../include/solaris"
+JAVA_LIBS='-L${JAVA_HOME}/lib/sparcv9/server -R${JAVA_HOME}/lib/sparcv9/server -ljvm'
+JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/sparcv9/server
+

@@ -1,0 +1,3 @@
+#! /bin/sh
+exec "$HOME/tmp/R/bin/Rscript" --default-packages=NULL \
+  "$HOME/lib/R/Scripts/summarize_check_CRAN_incoming_changes.R" "$@"

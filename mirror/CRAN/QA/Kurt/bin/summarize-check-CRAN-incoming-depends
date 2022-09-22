@@ -1,0 +1,18 @@
+#! /usr/bin/Rscript --default-packages=NULL
+### -*- R -*-
+
+all <- FALSE
+
+dir <- file.path(normalizePath("~"), "tmp", "CRAN")
+
+args <- commandArgs(trailingOnly = TRUE)
+
+if(any(ind <- args %in% c("-a", "--all"))) {
+    all <- TRUE
+    args <- args[!ind]
+}
+if(length(args)) {
+    dir <- args[1L]
+}
+
+tools::summarize_check_packages_in_dir_depends(dir, all)

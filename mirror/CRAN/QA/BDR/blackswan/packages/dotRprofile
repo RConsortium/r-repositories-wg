@@ -1,0 +1,11 @@
+options(show.signif.stars=FALSE)
+setHook(packageEvent("grDevices", "onLoad"),
+        function(...) {
+            grDevices::ps.options(horizontal=FALSE)
+        })
+set.seed(1234)
+options(repos=c(CRAN="file:///data/blackswan/ripley/R"))
+options(BioC_mirror="https://bioconductor.org")
+#options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
+#options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
+options(Ncpus=12)

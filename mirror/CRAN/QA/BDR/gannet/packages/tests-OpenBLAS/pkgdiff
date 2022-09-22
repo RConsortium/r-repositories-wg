@@ -1,0 +1,5 @@
+#! /usr/bin/env Rscript
+ref <- "../tests-devel"
+this <- "OpenBLAS"
+source('../pkgdiff.R')
+junk <- pkgdiff()

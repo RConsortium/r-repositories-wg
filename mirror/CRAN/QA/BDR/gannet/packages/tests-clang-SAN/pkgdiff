@@ -1,0 +1,5 @@
+#! /usr/bin/env Rscript
+ref <- "../tests-clang-SAN-keep"
+this <- NULL
+source('../pkgdiff.R')
+junk <- pkgdiff()

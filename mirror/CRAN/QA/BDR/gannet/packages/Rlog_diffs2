@@ -1,0 +1,12 @@
+#!/bin/sh
+MAIL=/bin/mail
+#RECIP="ripley@stats.ox.ac.uk,Kurt.Hornik@wu.ac.at,ligges@statistik.tu-dortmund.de"
+RECIP="ripley@stats.ox.ac.uk,CRAN@R-project.org"
+TMPFILE=/tmp/R-logs.$$
+
+LC_COLLATE=C /usr/local/bin/Rscript /data/gannet/ripley/R/packages/check_diffs.R > $TMPFILE
+cp -p /data/gannet/Rlogs/gcc-check.csv /data/gannet/Rlogs/gcc-check.csv.prev
+cp -p /data/gannet/Rlogs/clang-check.csv /data/gannet/Rlogs/clang-check.csv.prev
+
+cat $TMPFILE | $MAIL -s "[Rcheck] gannet on `date -Idate`" $RECIP
+rm -f $TMPFILE

@@ -1,0 +1,8 @@
+CFLAGS="-g -O2 -Wall -pedantic -mtune=native"
+CXXFLAGS="-g -O2 -Wall -pedantic -mtune=native"
+FFLAGS="-g -O2 -mtune=native -Wall -pedantic"
+FCFLAGS=$FFLAGS
+CPPFLAGS='-I/data/blackswan/ripley/extras/include -I/usr/local/include'
+LDFLAGS='-L/data/blackswan/ripley/extras/lib64 -L/usrlocal/lib64'
+R_LD_LIBRARY_PATH='/data/blackswan/ripley/extras/lib64:/usr/local/lib64:/data/blackswan/ripley/extras/mosek/6/tools/platform/linux64x86/bin'
+JAVA_HOME=/usr/lib/jvm/java-1.8.0

@@ -1,0 +1,161 @@
+---
+title: "CRAN to-do list"
+author: "Duncan Murdoch"
+date: "January 4, 2017"
+output: 
+  html_document:
+    toc: true
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{CRAN incoming procedures}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This document collects the suggestions for CRAN improvements
+from January, 2017.
+
+## Pretest procedures
+
+#### KH message "CRAN issues: pretest process"
+
+<22636.63618.552388.759953@aragorn.wu.ac.at> on Jan 4:
+
+A. We cannot yet automatically process the pretest results to distinguish
+   ok from not ok (presumably, ERROR and WARNING need fixing, but the
+   NOTEs cannot trivially be disambiguated)
+
+B. We still don't know how to efficiently block likely "bad" submissions
+   from further processing.  Problems found may be false positives in
+   some sense, so it seems we need a way so that maintainers can say
+   "Despite your pretest results, everything is fine".  On the other
+   hand, if this is mis-used, in particular programmatically, then we
+   gain nothing.
+
+Uwe and I had also discussed that several months ago, but not gotten too
+far.  I seem to recall that for the second issue, the best we could
+think of was to provide a "submit despite the problems" button, but warn
+about mis-use and in case of such black-list maintainers.
+
+#### DM followup
+
+<1724bdc3-4adf-19af-e445-b1d7c6f9033a@gmail.com>:
+
+For submissions that are likely to fail, one approach other than having 
+the maintainer telling the system to ignore the problem would be to have 
+a larger group of reviewers who can tell the system to ignore the problem.
+
+...
+
+My suggestion is very similar [to yours], just that most maintainers would not see 
+the button, but some other people would.
+
+#### DM "Re: Plan for CRAN work?"
+
+<614aa9cb-a069-8ab8-a6c5-31033ebe7300@gmail.com> on Jan 3:
+
+1. Do more automatic testing before any of us even looks at a package, so 
+that we don't discover platform-specific issues (or old-release issues) 
+after a package is already on CRAN.
+
+2. Get more people involved in the evaluation process by making 
+submissions visible to them, and letting them help the maintainer fix 
+problems.  We should only be looking for things that the automatic tests 
+can't find, like badly written Descriptions, etc.
+
+3. Standardize the rev dep checking, and have it happen before we see the 
+package.
+
+#### DS followup
+
+<CADfFDC6RsXqYBL6wc+pe41TjBmECOyrw9Ks4K_uQPjGeEEj3=g@mail.gmail.com> on Jan 3
+
+1. R-hub seems to be a good systematic approach to doing this.
+2. The R-pkg-devel list should be a good forum for this.
+
+#### KH followup
+
+<22636.61727.711731.661492@aragorn.wu.ac.at> on Jan 4
+
+For 1 and 3, I still think it is best to establish a "testing" CRAN
+package repository in addition to the "release" one.  With this
+(provided suitable coverage by check flavor maintainers), we get full
+platform and revdep check coverage automatically, and can hold off
+moving things from testing to release until according to degree of
+problem resolution.  As I already wrote, I think we need such a
+repository anyways to handle breakages from package upgrades more
+smoothly.
+
+## IP Violations
+
+#### KH "CRAN issues: fun stuff maybe"
+
+<22636.64702.916855.907530@aragorn.wu.ac.at> on Jan 4:
+
+It would be good to have functionality for determining obvious IP
+  violations in packages, i.e., instances where license, copyright or
+  author information in the package sources was not correctly taken into
+  account.  
+
+  A starting point could be Debian's licensecheck (all Perl code, hence
+  portable in principle).
+  
+## Coverage checks
+
+#### KH "CRAN issues: fun stuff maybe"
+
+<22636.64702.916855.907530@aragorn.wu.ac.at> on Jan 4:
+
+It would be good to have functionality for better code/docs coverage
+  checks.  Uwe still seems to actually inspect examples and vignettes in
+  new submissions to detect basic cases where there is not enough
+  coverage.  We've long been discussing how to perhaps automate this.
+  One possibility would be using something like covr which analyses
+  coverage at run time: that is quite expensive, and does not integrate
+  well into our current services.  Some time ago, I thus wrote code that
+  only uses simple code analysis to investigate coverage.  
+
+
+## Transaction log 
+
+#### KH "CRAN issues: transaction log needs"
+
+<22637.1923.205453.680024@aragorn.wu.ac.at> on Jan 4:
+
+I think we need something which allows to log useful/relevant info
+(about packages) so that this can be processed and summarized
+automatically.  Structurally, this could be organized around a
+database of "transactions" with standardized semantics (e.g., "update of
+package A breaks package B", "rxxxxx breaks package C", "xxx asked for
+an update of package yyy fixing issue zzz" (optionally "before
+yyyy-mm-dd") etc., which would then allow to filter transactions
+according to date, package etc.
+
+It might be possible to extract transaction information from emails (by
+suitably annotating them), but perhaps going the other way round (record
+the transaction and have email(s) generated accordingly) is better.
+
+## Spell Checking
+
+#### DS "Re: Plan for CRAN work?"
+
+<CADfFDC6RsXqYBL6wc+pe41TjBmECOyrw9Ks4K_uQPjGeEEj3=g@mail.gmail.com> on Jan 3
+
+Our spell checking still has lots of false positives. Some time back
+Kurt sent a summary of the frequent examples and added some to R's
+stat dictionary, but it might be useful to add more. I am happy to
+look over the full list.
+
+## r-project.org command line
+
+#### DS "Re: Plan for CRAN work?"
+
+<CADfFDC6RsXqYBL6wc+pe41TjBmECOyrw9Ks4K_uQPjGeEEj3=g@mail.gmail.com> on Jan 3
+
+Could we automate the process of CRAN-pack + CRAN-package-list +
+send email? Maybe we could just move OK packages to a directory called
+"accepted/" and let a cron job do the rest.
+
+

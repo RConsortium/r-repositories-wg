@@ -1,0 +1,36 @@
+#!/usr/bin/perl
+
+$fn=shift;
+$ofn=shift;
+if ($fn eq '') {
+    while (<>) {
+	s/%([A-Z]+)%/se($1)/ge;
+	print $_;
+    }
+    exit 0;
+}
+
+sub se {
+    my ($a,$rfn);
+    $a = $ENV{$_[0]};
+    if ($a eq '' && $w{$_[0]}<1) {
+	$rfn=$fn; $rfn="<stdin>" if ($rfn eq '');
+	print STDERR "WARN[envs]: \"$_[0]\" is unset but requested in $rfn\n";
+	$w{$_[0]}=1;
+    }
+    $ch++;
+    $a;
+}
+
+open IN, $fn;
+while (<IN>) {
+    s/%([A-Z]+)%/se($1)/ge;
+    if ($ofn eq '') { print $_; } else { $c.=$_ };
+}
+close IN;
+
+if ($ofn ne '' && ($ch>0 || $fn ne $ofn)) {
+    open OUT, ">$ofn";
+    print OUT $c;
+    close OUT;
+}

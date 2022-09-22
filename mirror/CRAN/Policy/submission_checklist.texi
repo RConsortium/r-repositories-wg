@@ -1,0 +1,100 @@
+\input texinfo
+@documentencoding UTF-8
+
+@c %**start of header
+@setfilename submission_checklist.info
+@settitle Checklist for CRAN submissions
+@documentlanguage en
+
+@titlepage
+@title Checklist for CRAN submissions
+@author CRAN Repository Maintainers
+@end titlepage
+
+Please always read the
+@uref{https://cran.r-project.org/web/packages/policies.html,CRAN
+policies} first. This document gives some @emph{additional} hints for a
+useful CRAN submission, especially for new submissions.
+
+Unless there are good reasons, packages submitted to CRAN are expected
+to pass @code{R CMD check --as-cran}, and you will be asked to fix and
+resubmit your package if it gives warnings or significant notes. To
+avoid this, you should run @code{R CMD check --as-cran} yourself with a
+current development version of R before submitting to CRAN.
+
+You can use the following web services to supplement your own tests:
+
+@itemize
+@item
+@uref{https://win-builder.r-project.org/,Winbuilder} checks packages on
+Windows using a current development version of R. The
+same infrastructure is used by the CRAN team for checking submitted
+packages.
+
+@item
+@uref{https://builder.r-hub.io/,R-hub} can be used to check packages
+on multiple platforms and versions of R using virtual machines. The
+service is not maintained by CRAN and hence different check settings may
+be in place.
+@end itemize
+
+In addition to the automated checks, we expect package authors to follow
+good practices that make their package more accessible and useful to the
+wider R community.
+
+The most important way to do this is to write an informative entry in
+the @code{Description} field in the @code{DESCRIPTION} file (see the
+relevant section of the
+@uref{https://cran.r-project.org/doc/manuals/r-devel/R-exts.html#The-DESCRIPTION-file,Writing
+R Extensions} manual). The @code{Title} and @code{Description} fields
+are shown at the top of the CRAN landing page for the package, and
+should therefore be written with care.
+
+@itemize
+@item
+Make the Description as informative as possible for potential new users
+of your package. If in doubt, make the Description longer rather than
+shorter, but try to avoid redundancies such as repetitions of the package name.
+
+@item
+Write function names including parentheses as in @code{foo()} but without quotes.
+
+@item
+Put non-English usage, including names of other packages and external
+software, in single quotes. Example: @code{'OpenSSL'}.
+
+@item
+Relevant citations should be included in the description. These should
+be in author-year style, preferably followed by an identifier such as
+DOI, arXiv id, or ISBN for published materials.
+
+@item
+DOIs should be enclosed in angle brackets, and formatted as
+@code{<doi:10.prefix/suffix>}. Example:
+@code{Sugihara (1994) <doi:10.1098/rsta.1994.0106>}.
+
+@item
+arXiv identifiers should be enclosed in angle brackets, and formatted as
+@code{<arXiv:YYMM.NNNNN>}. Example:
+@code{Srivastava et al. (2011) <arXiv:1103.3817>}.
+
+@item
+Similarly, relevant URLs should be included in the description, also
+enclosed in angle brackets (see the
+@uref{https://cran.r-project.org/doc/manuals/r-devel/R-exts.html#Specifying-URLs,Writing
+R Extensions} manual for details). Example:
+@code{<https://cran.r-project.org/>}.
+
+@item
+Preferably, provide an @code{Authors@@R} field in @file{DESCRIPTION}
+giving all the authors, including contributors and copyright holders,
+with appropriate roles.  For persons with an ORCID identifier (see
+@uref{https://orcid.org/} for more information, provide the identifier
+via an element named @code{"ORCID"} in the @code{comment} argument of
+@code{person()}.  Example:
+@code{person("Achim", "Zeileis", comment = c(ORCID =
+"0000-0003-0918-3766"))}.
+
+@end itemize
+
+@bye

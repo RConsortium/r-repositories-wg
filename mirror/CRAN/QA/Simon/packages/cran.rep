@@ -1,0 +1,130 @@
+#!/usr/bin/perl
+
+$defaultver='2.2.0';
+
+$CRANBASE=$ENV{CRANBASE};
+$CRANBASE=shift if ($CRANBASE eq '');
+$CRANBASE='CRAN' if ($CRANBASE eq '');
+
+$BINBASE=$ENV{BINBASE};
+$BINBASE=shift if ($BINBASE eq '');
+$BINBASE='.' if ($BINBASE eq '');
+
+while (($a=shift) ne '') {
+    if ($a=~/^--/) {
+	$html=1 if ($a eq '--html');
+	$all=1 if ($a eq '--all');
+    } else {
+	push @tgts, $a;
+    }
+}
+
+if ($tgts[0] eq '') {
+    print STDERR "\nNo targets specified.\n\n Usage: cranrep <cran-base> <bin-base> [<options>] <target[/ver1]> [<target[/ver2]> ...]\n\n Options: --html, --all\n\n";
+    exit 1;
+}
+
+sub htmlPrint {
+    my ($fn);
+    $fn=$_[0];
+    open INF, $fn;
+    print OUT "<tt>";
+    while (<INF>) {
+	s/[\r\n]+//g;
+	s/&/&amp;/g;
+	s/</&lt;/g;
+	s/>/&gt;/g;
+	print OUT "$_<br>\n";
+    }
+    print OUT "</tt>";
+    close INF;
+}
+
+sub pkg {
+    $pkg=$_[0];
+    $pkg_=$pkg.'_';
+    $line='';
+
+    $total++; $ok++;
+    @a=`ls $CRANBASE/src/contrib/$pkg_*`;
+    foreach (@a) { s/[\r\n]+//g; };
+    if ($a[0] eq '') {
+	$src='MISSING';
+	$bin='';
+	$ver='';
+    } else {
+	$ver='?';
+	$pbase='';
+	$src=$fullsrc=$a[0];
+	$src=$1 if ($src=~/\/([^\/]+)$/);
+	$pbase=$1 if ($src=~/(.*)\.tar\.gz/);
+	$ver=$1 if ($pbase=~/.*?_(.*)/);
+	$src='OK';
+	$failed=0;
+	$excluded=0;
+	if ($html>0) {
+	    $line="<tr><td>$pkg</td><td>$ver</td>"; 
+	} else {
+	    $line='';
+	}
+	$first=1;
+	foreach $tv (@tgts) {
+	    ($target,$ver)=split '/',$tv;
+	    $ver=$defaultver if ($ver eq '');
+	    if (-e "$BINBASE/$target/bin/$ver/$pbase.tgz") {
+		$bin="OK";
+	    } elsif (-e "excludes/$pkg") {
+		open XI,"excludes/$pkg"; $xr=<XI>; close XI; $xr=~s/[\r\n]+//g;
+		$bin="excluded, $xr";
+		$excluded++;
+	    } else {
+		$failed++;
+		@b=`ls $BINBASE/$target/bin/$ver/$pkg_*tgz 2> /dev/null`; foreach (@b) { s/[\r\n]+//g; };
+		if ($b[0] ne '') {
+		    $f=$b[0];
+		    $f=$1 if ($f=~/\/([^\/]+)$/);
+		    $bin="expected: $pbase, found: $f";
+		    $bin.=", <a href=$target/results/$ver/html/$pkg.report.html>FAILED</a>" if ($html>0);
+		} else {
+		    $bin=($html>0)?"<a href=$target/results/$ver/html/$pkg.report.html>FAILED</a>":'FAILED';
+		}
+		if ($html>0) {
+		    if ( ! -e "$BINBASE/$target/results/$ver/html" ) { mkdir "$BINBASE/$target/results/$ver/html"; };
+		    open OUT,">$BINBASE/$target/results/$ver/html/$pkg.report.html";
+		    print OUT "<html><title><head>Package $pkg failure report (target $target, R $ver)</head></title>\n<body bgcolor=white>\n<h1>Package $pkg build failure report (target $target, R $ver)</h1><p><table border=0 cellpadding=5 cellspacing=0><tr bgcolor=#ffffe0><th>Build errors</th></tr><tr><td>";
+		    htmlPrint "$BINBASE/$target/results/$ver/$pkg.sier";
+		    print OUT "</td></tr><tr bgcolor=#ffffe0><th>Build output</th></tr><tr><td>";
+		    htmlPrint "$BINBASE/$target/results/$ver/$pkg.srci";
+		    print OUT "</table>\n";
+		    close OUT;
+		}
+	    }
+	    if ($html>0) {
+		if ($first==1) { $line.="<td>$src</td>"; $first=0; }
+		$line.="<td>$bin</td>";
+	    } else {
+		if ($first==1) { $line.=sprintf('%-30s',$pkg).$src; $first=0; }
+		$line.="\t$bin";
+	    }
+	}
+    }
+
+    $line.="</tr>" if ($html>0);
+    if ($failed>0 || $excluded>0 || $all>0) {
+	print "$line\n"; $ok--;
+    }
+}
+
+$hdr=''; foreach(@tgts) { $hdr.="<th>$_</th>"; };
+print "<table>\n<tr><th>Package</th><th>Version</th><th>Source</th>$hdr</tr>\n" if ($html>0);
+
+open IN,"$CRANBASE/src/contrib/PACKAGES";
+while (<IN>) {
+    s/[\r\n]+//g;
+    pkg($1) if (/Package:\s+(.*)/);
+}
+close IN;
+
+print "</table>\n"if ($html>0);
+
+print "<p>",($total-$ok)," of $total packages failed.<p>";

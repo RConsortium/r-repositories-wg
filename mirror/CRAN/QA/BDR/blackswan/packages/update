@@ -1,0 +1,2 @@
+rsync -rvCtL --delete gannet:R/packages/contrib .
+rsync -rvCtL --delete gannet:R/web ..

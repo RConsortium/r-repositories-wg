@@ -1,0 +1,12 @@
+#/bin/csh
+
+rm -rf /tmp/Libs
+mkdir /tmp/Libs
+rm -f /tmp/tmpinstall.log
+echo "-- installing"
+Rgcc CMD INSTALL -l /tmp/Libs $1 >& /tmp/tmpinstall.log
+echo "-- checking"
+env _R_CHECK_VIGNETTES_SKIP_RUN_MAYBE_=true _R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_=TRUE R CMD check $1 --check-subdirs=yes-maybe  --no-stop-on-test-error --install=check:/tmp/tmpinstall.log --library=/tmp/Libs --extra-arch
+rm /tmp/tmpinstall.log
+rm -r /tmp/Libs
+

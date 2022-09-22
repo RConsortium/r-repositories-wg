@@ -1,0 +1,76 @@
+#!/bin/sh
+
+: ${BASE=/Builds/packages}
+
+: ${SUMDIR=${BASE}/summary}
+: ${RBIN=R}
+
+: ${sync=yes}
+
+if [ -z "${OUTDIR}" ]; then
+    OUTDIR=${SUMDIR}/out
+    rm -rf ${OUTDIR}
+fi
+
+R_scripts_dir=${SUMDIR}
+check_dir=${SUMDIR}
+
+VER=`echo 'cat(paste(R.version$major,round(as.numeric(R.version$minor)),sep="."))'| ${RBIN} --slave --no-save`
+
+if [ -z "$VER" ]; then
+    echo "**ERROR: cannot retrieve R version" >&2
+    exit 1
+fi
+
+if [ ! -e "${OUTDIR}" ]; then mkdir "${OUTDIR}"; fi
+
+# we need some CRAN packages, so use Rlib
+R_LIBS=${BASE}/tiger-universal/Rlib/${VER} ${RBIN} --slave --no-save <<EOF
+  source("${R_scripts_dir}/check.R")
+  index=file("${OUTDIR}/index","w")
+  bioc=read.table("${BASE}/bioc.repos",F,sep="|")
+  dirs=c(".",as.character(bioc[[1]]))
+  for (dir in dirs) {
+    fdir=file.path("${SUMDIR}",dir)
+    sumf=file.path(fdir,"summary.psv")
+    odir=file.path("${OUTDIR}",dir)
+    if (!file.exists(odir)) system(paste("mkdir -p",odir))
+    html=file.path(odir,"summary.html")
+    cat("fdir:",fdir,"\nsumf:",sumf,"\nhtml:",html,"\n")
+    write.table(check_summary(fdir),sumf,row.names=F,col.names=T,quote=F,sep="|")
+    cat(paste("cat",sumf,"|${SUMDIR}/reformat >",html,"\n"))
+    system(paste("cat",sumf,"|${SUMDIR}/reformat >",html))
+    #rhtml=paste("<a href=",dir,"/summary.html>",dir,"</a><p>\n",sep='')
+    writeLines(dir, index)
+  }
+  close(index)
+EOF
+
+DIRS=`cat ${OUTDIR}/index`
+sed -e 's|.*|<a href=&/index.html>&</a>\&nbsp;\&nbsp;\&nbsp;|' ${OUTDIR}/index > ${OUTDIR}/navi.html
+for dir in ${DIRS}; do
+    echo " --- ${dir}"
+    lns=`sed -n 's|.*http://www.R-project.org/nosvn/R.check/R-2.5-macosx/\(.*\)-00check.html.*|\1|p' ${OUTDIR}/${dir}/summary.html`
+    for f in ${lns}; do
+	echo "   $f"
+	"${SUMDIR}/chk2html" "${SUMDIR}/${dir}/R-2.5-macosx/PKGS/$f.Rcheck/00check.log" "${OUTDIR}/${dir}/$f-00check.html"
+	if grep 00install "${OUTDIR}/${dir}/$f-00check.html" >/dev/null; then
+	    "${SUMDIR}/inst2html" "${SUMDIR}/${dir}/R-2.5-macosx/PKGS/$f.Rcheck/00install.out" > "${OUTDIR}/${dir}/$f-00install.html"
+	fi
+    done
+    echo "sed -e s|http://www.R-project.org/nosvn/R.check/R-2.5-macosx/|| ${OUTDIR}/${dir}/summary.html > ${OUTDIR}/${dir}/a.html"
+    echo "<head>~<title>Check result index for $dir</title>~</head>~<body bgcolor=white style='font-family: meta, arial, helvetica; font-size: 11pt'>~<h2>Check result index for $dir</h2><b>Date: " | sed 'y/~/\n/' > "${OUTDIR}/${dir}/index.html"
+    date >> "${OUTDIR}/${dir}/index.html"
+    echo "</b><p>" >> "${OUTDIR}/${dir}/index.html"
+    if [ "${dir}" = . ]; then
+	echo "<hr><b>Other reports:</b>&nbsp;&nbsp;" >> "${OUTDIR}/${dir}/index.html"
+	cat "${OUTDIR}/navi.html" >> "${OUTDIR}/${dir}/index.html"
+	echo "<hr><p>" >> "${OUTDIR}/${dir}/index.html"
+    fi
+    sed -e "s|http://www.R-project.org/nosvn/R.check/R-2.5-macosx/||" "${OUTDIR}/${dir}/summary.html" >> "${OUTDIR}/${dir}/index.html"
+    echo "</body></html>" >> "${OUTDIR}/${dir}/index.html"
+done
+
+if [ "${sync}" = "yes" ]; then
+    rsync --rsync-path ./rsync -e ssh -av --delete "${OUTDIR}/" r:wwwfiles/results/
+fi

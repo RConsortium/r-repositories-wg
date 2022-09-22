@@ -1,0 +1,4 @@
+30 2 * * *	/Users/urbanek/R-builds/mirror.CRAN
+0 3 * * *	/Users/urbanek/R-builds/nightly.build
+0 4 * * *	/Users/urbanek/R-builds/mirror.CRAN
+15 4 * * *	/Users/urbanek/R-builds/daily.update

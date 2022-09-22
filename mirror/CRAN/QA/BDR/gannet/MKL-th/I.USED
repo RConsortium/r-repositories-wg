@@ -1,0 +1,4 @@
+setenv MKL_LIB_PATH /usr/local/MKL/mkl/lib/intel64
+setenv LD_LIBRARY_PATH $MKL_LIB_PATH
+setenv MKL "-L$MKL_LIB_PATH -lmkl_gf_lp64 -lmkl_core -lmkl_gnu_thread -dl -fopenmp"
+~/R/svn/R-devel/configure -C --with-blas="$MKL" --with-lapack

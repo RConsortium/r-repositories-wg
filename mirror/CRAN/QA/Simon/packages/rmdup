@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+
+$sd=shift;
+$sd='src/contrib/*.tar.gz' if ($sd eq '');
+
+@a=`ls $sd`;
+foreach(@a) {
+    s/[\r\n]+//g;
+    if (/\/(.*?)\.tar\.gz/ || 
+	/\/(.*?)\.tgz/ ||
+	/\/(.*?)\.DESCRIPTION/
+	) {
+	$fn=$_;
+	$p=$1;
+	$pv=$p;
+	if ($p=~/^(.*?)_(.*)/) {
+	    $pn=$1;
+	    $pv=$2;
+	    $pv=~s/[\-\.\_]+/ /g;
+	    @v=split ' ',$pv;
+	    $vs='';
+	    foreach(@v) { $vs.=sprintf '%05s',$_; };
+	    #print "$pn:[$vs]\n";
+	    if ($pn eq '') {
+		print STDERR "File $fn: cannot extract package name\n";
+	    } else {
+		if ($ver{$pn} ne '') {
+		    if ($ver{$pn} lt $vs) {
+			print "  rm $ver{$pn} ($tar{$pn})\n";
+			`rm \"$tar{$pn}\"`;
+		    }
+		    if ($ver{$pn} gt $vs) {		    
+			print "  rm $vs ($fn)\n";
+			`rm \"$fn\"`;
+		    } else {
+			$ver{$pn}=$vs;
+			$tar{$pn}=$fn;
+		    }
+		} else {
+		    $ver{$pn}=$vs;
+		    $tar{$pn}=$fn;
+		}
+	    }
+	} else {
+	    print STDERR "File $fn: invalid name, ignoring.\n";
+	}
+    } else {
+	print STDERR "File $_: invalid name, ignoring.\n";
+    }
+}

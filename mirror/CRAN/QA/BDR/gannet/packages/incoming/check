@@ -1,0 +1,11 @@
+#!/bin/csh
+source ~/R/packages/common.csh
+
+setenv R_LIBS ~/R/test-dev
+
+setenv _R_CHECK_DEPENDS_ONLY_DATA_ true
+setenv _R_CHECK_DONTTEST_EXAMPLES_ false
+
+foreach f ($*)
+~/R/R-devel/bin/R CMD check --as-cran $f
+end

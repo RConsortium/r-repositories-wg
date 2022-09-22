@@ -1,0 +1,1 @@
+rsync -rvCtL --delete gannet:R/packages/contrib .

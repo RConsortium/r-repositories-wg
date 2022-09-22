@@ -1,0 +1,75 @@
+SOURCES=${shell ls *.in}
+OUTS=$(SOURCES:.in=.out)
+
+.SUFFICES:
+.SUFFICES: .in .out
+
+## use foo-VARS=MAKE=make MAKEFLAGS=  to suppress parallel installs
+BayesFM-VARS = MAKE=make MAKEFLAGS=
+MonetDBLite-VARS = MAKE=make MAKEFLAGS=
+Rblpapi-VARS = MAKE=make MAKEFLAGS=
+RxODE-VARS = MAKE=make MAKEFLAGS=
+RProtoBuf-VARS = MAKE=make MAKEFLAGS=
+RcppOctave-VARS = MAKE=make MAKEFLAGS=
+hsdar-VARS = MAKE=make MAKEFLAGS=
+nimble-VARS = MAKE=make MAKEFLAGS=
+nloptr-VARS = MAKE=make MAKEFLAGS=
+
+Rserve-OPTS = --install-args='--configure-args=--without-server'
+udunits2-OPTS = --install-args='--configure-args=--with-udunits2-include=/usr/include/udunits2'
+
+## excessive CPU time
+# or memory for MSIseq, mnlogit
+GPareto-OPTS = --no-vignettes
+GiANT-OPTS = --no-vignettes
+MSIseq-OPTS = --no-vignettes
+SensMixed-OPTS = --no-tests
+crmPack-OPTS = --no-vignettes
+laGP-OPTS = --no-vignettes
+lmerTest-OPTS = --no-tests
+mcemGLM-OPTS = --no-vignettes
+mnlogit-OPTS = --no-vignettes
+ordinalgmifs-OPTS = --no-vignettes
+phylosim-OPTS = --no-vignettes
+psychomix-OPTS = --no-vignettes
+rstan-OPTS = --install=fake
+tgp-OPTS = --no-vignettes
+
+BB-OPTS = --no-build-vignettes
+Bclim-OPTS = --no-build-vignettes
+DLMtool-OPTS = --no-build-vignettes
+PAGI-OPTS = --no-build-vignettes
+STAR-OPTS = --no-build-vignettes
+abc-OPTS = --no-build-vignettes
+amei-OPTS = --no-build-vignettes
+amen-OPTS = --no-build-vignettes
+babel-OPTS = --no-build-vignettes
+ctmm-OPTS = --no-build-vignettes
+dismo-OPTS = --no-build-vignettes
+mediation-OPTS = --no-build-vignettes
+pmc-OPTS = --no-build-vignettes
+spikeSlabGAM-OPTS = --no-build-vignettes
+
+## LaTeX issues
+patchDVI-OPTS = --no-build-vignettes
+
+## slow/broken web access
+BACA-OPTS = --no-vignettes
+rgeolocate-OPTS = --no-tests
+
+RMySQL-OPTS = --no-tests
+TSdata-OPTS = --no-vignettes
+
+easyPubMed-OPTS = --no-examples
+nbconvertR-OPTS = --no-vignettes
+
+## needs API key
+fitbitScraper-OPTS = --no-vignettes
+domino-OPTS = --no-tests
+
+
+## crash etc
+TSjson-OPTS = --no-examples --no-tests
+umx-OPTS = --no-tests
+
+

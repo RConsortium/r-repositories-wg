@@ -1,0 +1,22 @@
+#! /bin/csh
+~/R/packages/InUse.R ~/R/packages/tests-clang || exit 1
+
+set path=(~/bin /usr/local/bin /usr/local/texbin /usr/sbin $path /usr/lib64/openmpi/bin)
+setenv PKG_CONFIG_PATH /usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+
+cd ~/R/packages
+Rclang -f reinstall.R
+
+/data/gannet/ripley/R/R-clang/bin/Rscript unavailable.R
+env DISPLAY=:5 /data/gannet/ripley/R/R-clang/bin/Rscript updates.R
+
+rm -rf ~/.cache/R/*
+cd ~/R/packages
+#./check-clang
+cd tests-clang
+make backup veryclean unpack
+./script
+echo 'packaging'
+make package
+echo 'done'
+

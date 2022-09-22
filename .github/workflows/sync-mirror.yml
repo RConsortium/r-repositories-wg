@@ -1,0 +1,30 @@
+name: Sync mirror
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 8 * * *'
+
+jobs:
+  test_schedule:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install SVN
+        run: sudo apt-get install subversion
+      - name: Checkout CRAN directory from SVN
+        working-directory: ./mirror
+        run: svn checkout https://svn.r-project.org/R-dev-web/trunk/CRAN/
+      - name: Remove .svn directory from CRAN
+        working-directory: ./mirror
+        run: rm -rf CRAN/.svn
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.PAT }}
+          commit-message: Update CRAN mirror
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          branch: cran-svn-mirror-update
+          delete-branch: true
+          title: 'Update CRAN mirror'

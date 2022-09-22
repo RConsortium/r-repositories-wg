@@ -1,0 +1,9 @@
+#!/bin/sh
+
+BASE=/Builds/R-builds/nightly
+export BASE
+
+: ${server=r}
+$BASE/mkweb
+
+scp $BASE/web/index.html $server:wwwfiles/

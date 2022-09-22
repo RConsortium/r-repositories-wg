@@ -1,0 +1,45 @@
+SOURCES=${shell ls *.in}
+OUTS=$(SOURCES:.in=.out)
+
+.SUFFICES:
+.SUFFICES: .in .out
+
+## use foo-VARS=MAKE=make MAKEFLAGS=  to suppress parallel installs
+RDieHarder-VARS = MAKE=make MAKEFLAGS=
+frailtypack-VARS = MAKE=make MAKEFLAGS=
+sparsegl-VARS = MAKE=make MAKEFLAGS=
+
+RAppArmor-OPTS = --install-args='--configure-vars="NO_APPARMOR=1"'
+Rserve-OPTS = --install-args='--configure-args=--without-server'
+
+## excessive CPU time
+BASS-OPTS = --no-vignettes
+amen-OPTS = --no-build-vignettes
+hetGP-OPTS = --no-vignettes
+laGP-OPTS = --no-vignettes
+mcemGLM-OPTS = --no-vignettes
+morse-OPTS = --no-vignettes
+tgp-OPTS = --no-vignettes
+
+# hang until overall timeout
+svSocket-OPTS = --no-vignettes
+
+## excessive memory in pandoc (> 50GB)
+lifecontingencies-OPTS = --no-vignettes
+
+## slow/broken web access
+TSdata-OPTS = --no-vignettes
+
+## needs IPython 3+ or Jupyter
+nbconvertR-OPTS = --no-vignettes
+
+## needs API key
+fitbitScraper-OPTS = --no-vignettes
+
+## very unreliable
+BIEN-OPTS = --no-tests
+aptg-OPTS = --no-vignettes
+simsalapar-OPTS = --no-tests
+
+## hangs
+BMTME-OPTS = --no-tests --no-vignettes

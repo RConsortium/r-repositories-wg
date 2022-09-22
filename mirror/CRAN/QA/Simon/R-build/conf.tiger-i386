@@ -1,0 +1,1 @@
+CC="gcc -arch i386 -std=gnu99" CXX="g++ -arch i386" OBJC="gcc -arch i386 -std=gnu99" F77="gfortran -arch i386" FC="gfortran -arch i386" --enable-BLAS-shlib --with-system-zlib

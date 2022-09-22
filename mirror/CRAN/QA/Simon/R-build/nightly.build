@@ -1,0 +1,251 @@
+#!/bin/sh
+#
+# nightly.build [cron|subcron]
+#
+# flag defaults: rebuild=yes, mkfw=yes, gui=yes
+#
+# cron = run nightly.web when finished
+# subcron = deploy to master and run nightly.web on master when finished
+#
+
+: ${BASE=/Builds/R-builds/nightly}
+: ${RDIRS=`cat $BASE/builds`}
+
+: ${mastersrv=hagal}
+: ${masterbase=${BASE}}
+
+RBUILDS=$BASE
+
+PATH=$PATH:/usr/local/subversion/bin:/usr/X11/bin
+export PATH
+
+# make sure dSYMs are included in the build
+export PKG_MAKE_DSYM=1
+
+if [ "$1" = cron ]; then
+    $BASE/nightly.update
+fi
+
+. $BASE/common
+
+export RDIRS
+
+if [ -e $BASE/lock.nightly.build ]; then
+    LPID=`cat $BASE/lock.nightly.build`
+    if ps -p $LPID|grep nightly; then
+	echo "Nightly build is locked by another build, pid $LPID." &1>2
+	exit 1
+    else
+	echo "Stale lock for pid $LPID, removing"
+	rm -f $BASE/lock.nightly.build
+    fi
+fi
+
+echo "$$" > $BASE/lock.nightly.build
+
+date > $BASE/nightly.log
+
+rm -f $BASE/GUIs $BASE/R-GUI-*.tar.gz $BASE/R-GUI-*.dmg $BASE/pkgs $BASE/*-mini.dmg
+
+: ${rebuild=yes}
+: ${mkfw=yes}
+: ${gui=yes}
+: ${pkg=yes}
+
+# precaution - build in C locale
+LANG=C
+export LANG
+
+applecc=yes
+if which gcc|grep /gcc4.0/ > /dev/null; then
+    applecc=no
+fi
+
+# as of 2010 we build TRI-builds only
+if [ "$oscode" != tiger ]; then
+    TRI=1
+    export TRI
+fi
+
+host=`hostname -s|tr A-Z a-z`
+if [ "$host" = ginaz -a "$oscode" = leopard ]; then
+    # QUAD=1 # as of Oct 2009 we no longer support ppc64    
+    # export QUAD  # ./universal needs to know
+    TRI=1
+    export TRI
+    if [ "$1" = subcron ]; then
+	${BASE}/nightly.update > ${BASE}/last.update.log 2&>1
+    fi
+fi
+
+
+if [ $oscode != tiger ]; then
+    BSTYLES="Leopard Leopard64"		
+else
+    BSTYLES="Deployment"
+fi
+
+for RD in $RDIRS; do
+    echo "$RD"
+    ok=yes
+    if [ $rebuild = yes ]; then
+	if [ $ARCH = i386 ]; then
+	    if [ -n "${QUAD}" ]; then
+		cd $BASE
+		# due to a bug in foreign we must set the pre-processor when calling make
+		#XTRAMAKEF="'CPP=gcc -arch ppc64 -E'" ./buildR $RD ppc64 $oscode-ppc64
+
+		# let caladan do the dirty work for ppc64 as we can't check it
+		# FIXME: this is sort of hard-coded ...
+		if [ -n "${PAR64}" ]; then
+		    rm -f caladan-finished
+		    ${BASE}/caladan_ppc64_build "$RD" > ${BASE}/caladan-output 2>&1 &
+		else
+		    rsync --delete -az ${RD}/ caladan:/Builds/R-builds/nightly/${RD}/
+		    ssh caladan /Builds/R-builds/nightly/ppc64-autobuild ${RD}
+		    cd $BASE
+		    rsync --delete -az caladan:/Builds/R-builds/nightly/leopard-ppc64/ leopard-ppc64/
+		fi
+	    fi
+	    if [ -n "${TRI}" -o -n "${QUAD}" ]; then
+		cd $BASE
+		./buildR $RD x86_64 $oscode-x86_64
+	    fi
+	    # we could let caladan handle this as it would be faster (but only maybe) ...
+	    cd $BASE
+	    ./buildR $RD ppc $oscode-ppc
+	    cd $BASE
+	    ./buildR $RD i386 $oscode-i386
+
+	    if [ -n "${PAR64}" ]; then
+		if [ ! -e "${BASE}/caladan-finished" ]; then
+		    echo "ERROR: caladan didn't finish in time!" >&2
+		    date > ${BASE}/caladan-expected
+		    exit 1
+		fi
+	    fi
+	else
+	    echo "Sorry, I cannot build universal binaries on ppc machines"
+	    rm -f $BASE/lock.nightly.build
+	    exit 1
+	fi
+    fi
+
+    if [ $ok = yes ]; then
+	if [ $mkfw = yes ]; then
+	    cd $BASE
+	    ./universal $RD
+	fi
+
+	if [ -e $BASE/$oscode-universal/${RD}.SUCCESS -a $gui = yes ]; then
+	    echo "Universal framework built successfully." >> $BASE/nightly.log
+	    cd $BASE/Mac-GUI
+	    echo "Updating Mac-GUI" >> $BASE/nightly.log
+	    svn up 2>> $BASE/nightly.log
+	    SVNREV=`sed -n 's/.*revision="\(.*\)".*/\1/p' .svn/entries|head -n 1`
+	    if [ -z "${SVNREV}" ]; then
+		SVNREV=`sed -n '4 p' .svn/entries`		
+	    fi
+	    CURRENT_R_VER=`readlink /Library/Frameworks/R.framework/Versions/Current`
+	    SHORTVER=`echo ${CURRENT_R_VER} | sed 's/^\([0-9]\{1,\}\.[0-9]\{1,\}\).*/\1/'`
+	    BLD=/Builds
+	    for bst in $BSTYLES; do
+		cd $BASE/Mac-GUI
+		rm -rf $BLD/$bst $BLD/R.build
+		echo "Mac-GUI for $SHORTVER, $oscode, $bst" >> $BASE/nightly.log
+		if [ $applecc = yes ]; then
+		    LANG=en_US.UTF-8 xcodebuild -alltargets -configuration $bst BUILD_DIR=$BLD 2>> $BASE/nightly.log
+		    RAPPDIR="$BLD/$bst"
+		else
+		    #-- FSF-style build
+		    make clean 2>> $BASE/nightly.log
+		    STYLE=$bst make 2>> $BASE/nightly.log
+		    RAPPDIR="$BASE/Mac-GUI"
+		fi
+		if [ -e $RAPPDIR/R.app/Contents/MacOS/R ]; then
+		    cd $RAPPDIR
+		    chgrp -R admin R.app
+		    chmod -R g+w R.app
+		    find R.app -name .svn |xargs rm -rf
+		    GUINAME="R-GUI-$SVNREV-$SHORTVER-$oscode-$bst"
+		    tar fcz $BASE/$GUINAME.tar.gz R.app
+		    rm -rf $GUINAME
+		    mkdir $GUINAME
+		    mv R.app $GUINAME/
+		    rm -f $BASE/$GUINAME.dmg
+		    hdiutil create -srcfolder $GUINAME $BASE/$GUINAME.dmg
+		    rm -rf $GUINAME
+		    echo "$GUINAME" >> $BASE/GUIs
+		fi
+		make clean
+		rm -rf $BLD/$bst $BLD/R.build $RAPPDIR/R.app
+		cd $BASE
+	    done
+
+	    if [ "$pkg" = yes ]; then
+		rm -rf "$BASE/packaging/GUI-build" "$BASE/packaging/last"
+		mkdir "$BASE/packaging/GUI-build"
+		if [ $oscode = leopard ]; then
+		    echo "tar fxz $BASE/R-GUI-$SVNREV-$SHORTVER-$oscode-Leopard64.tar.gz -C $BASE/packaging/GUI-build"
+		    tar fxz "$BASE/R-GUI-$SVNREV-$SHORTVER-$oscode-Leopard64.tar.gz" -C "$BASE/packaging/GUI-build"
+		    mv "$BASE/packaging/GUI-build/R.app" "$BASE/packaging/GUI-build/R64.app"
+		    echo "tar fxz $BASE/R-GUI-$SVNREV-$SHORTVER-$oscode-Leopard.tar.gz -C $BASE/packaging/GUI-build"
+		    tar fxz "$BASE/R-GUI-$SVNREV-$SHORTVER-$oscode-Leopard.tar.gz" -C "$BASE/packaging/GUI-build"
+		    # don't run build/deploy, just prepare the config
+		    CLEAN=1 GUIPATH=$BASE/packaging/GUI-build $BASE/packaging/mkskel > $BASE/pkg-rel-$SHORTVER-$oscode.log 2>&1
+		else
+		    echo "tar fxz $BASE/R-GUI-$SVNREV-$SHORTVER-$oscode-Deployment.tar.gz -C $BASE/packaging/GUI-build"
+		    tar fxz "$BASE/R-GUI-$SVNREV-$SHORTVER-$oscode-Deployment.tar.gz" -C "$BASE/packaging/GUI-build"
+		    if [ -z "${RRELEASE}" ]; then
+			CLEAN=1 ALL=1 MINIONLY=1 GUIPATH=$BASE/packaging/GUI-build $BASE/packaging/mkskel > $BASE/pkg-$SHORTVER-$oscode.log 2>&1
+		    else
+			CLEAN=1 ALL=1 GUIPATH=$BASE/packaging/GUI-build $BASE/packaging/mkskel > $BASE/pkg-rel-$SHORTVER-$oscode.log 2>&1
+		    fi
+		fi
+		LAST=`cat $BASE/packaging/last`
+		if [ -n "${LAST}" ]; then
+		    export LAST
+		    PKGVER=`sh -c '. ${LAST}/conf; echo $VER'`
+		    PKGSVN=`sh -c '. ${LAST}/conf; echo $SVN'`
+		    PKGFN="${LAST}/R-${PKGVER}-mini.dmg"
+		    if [ -e $PKGFN ]; then
+			cp ${PKGFN} ${BASE}/${RD}-${PKGSVN}.dmg
+			echo "${RD}-${PKGSVN}.dmg" >> $BASE/pkgs
+		    fi
+		fi
+	    fi
+	fi
+    fi
+done
+
+# create deployment structure
+$BASE/old2new
+
+# remove old stuff
+$BASE/rmold
+
+# create Leopard installer packages
+if [ $oscode = leopard ]; then
+    for RD in ${RDIRS}; do
+	$BASE/runpkg "$RD" > $BASE/pkg-leopard-$RD.log 2>&1
+    done
+fi
+
+if [ "$1" = cron ]; then
+    $BASE/nightly.web
+    
+    # copy R-devel manuals if present
+    if [ -e "$BASE/$oscode-i386/R-devel/doc/manual/R-admin.html" ]; then
+	scp "$BASE/$oscode-i386"/R-devel/doc/manual/*.html r:wwwfiles/man/ >/dev/null
+    fi
+fi
+
+# synchronize deployment with master
+if [ "$1" = subcron ]; then
+    for RD in ${RDIRS}; do
+	rsync -av --delete ${BASE}/deploy/${oscode}/${RD}/ ${mastersrv}:${masterbase}/deploy/${oscode}/${RD}/
+    done
+    ssh ${mastersrv} ${masterbase}/nightly.web
+fi
+
+rm -f $BASE/lock.nightly.build

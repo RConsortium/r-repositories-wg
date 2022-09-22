@@ -1,0 +1,2 @@
+rm lib/libRblas.so
+ln -s /usr/lib64/atlas/libsatlas.so lib/libRblas.so

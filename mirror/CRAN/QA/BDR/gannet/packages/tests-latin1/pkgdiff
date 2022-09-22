@@ -1,0 +1,5 @@
+#! /usr/bin/env Rscript
+ref <- "../tests-latin1-keep"
+this <- NULL
+source('../pkgdiff.R')
+junk <- pkgdiff()

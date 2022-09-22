@@ -1,0 +1,64 @@
+Orphaning
+----------
+
+We do nowadays create a new version.  In theory the following should
+work (and somtimes does).
+
+- Unpack the tarball, bump the version in DESCRIPTION, run
+R CMD build --no-build-vignettes.
+
+- Ship the new tarball to CRAN (unless the previous step was done there).
+
+- Edit PACKAGES.in to add
+
+Maintainer: ORPHANED
+X-CRAN-Comment: Orphaned on xxxx-yy-zz
+
+and perhaps a reason.  The first line of the comment goes into the
+tarball at the next step, so keep it short,
+
+- CRAN-pack the new tarball.
+
+- Check that the published tarball does indeed have its maintainer
+  changed.  I have seen instances in which the HTML summary page did
+  but the tarball did not. One could re-try with CRAN-pack -u, and if
+  that fails, go back and change the Maintainer in the tarball and
+  CRAN-pack -u.
+
+One gotcha is that there are very few packages (data.table has been
+one) which hardcode the version somewhere else, so I usually R CMD
+check the new tarball.
+
+- For packages strongly depending (directly or indirectly) on this
+  one, R CMD check --as-cran will start warning that they depend on an
+  orphaned package, as will the some of the checks (e.g. fedora-clang)
+  once they are re-run.  At that point we inform the strong revdeps,
+  as our policy disallows strong dependence on an orphaned package.
+  (Could of course be done earlier but I find a warning on the check
+  results page concentrates people's minds.)
+
+A typical message is
+
+<quote>
+Subject: CRAN packages depending on package X
+
+Packages
+
+	A B C D
+
+require package X directly or indirectly and it has now been orphaned.
+The CRAN policy
+
+"Orphaned CRAN packages should not be strict requirements (in the
+‘Depends’, ‘Imports’ or ‘LinkingTo’ fields, including indirectly).
+They are allowed in ‘Suggests’ if used conditionally, although this is
+discouraged."
+
+now applies. Please adjust your packages to comply by xxxx-yy-zz.
+</quote>
+
+One could also inform the reverse Suggests, especially if they do not
+use 'X' conditionally.
+
+- We expect to archive an orphaned package once nothing depends on it,
+  and in any case within 6 months.

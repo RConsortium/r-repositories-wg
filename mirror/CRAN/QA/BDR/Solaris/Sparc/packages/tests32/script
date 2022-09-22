@@ -1,0 +1,24 @@
+#!/bin/csh
+setenv OMP_THREAD_LIMIT 2
+
+setenv DISPLAY :5
+limit cputime 90m
+setenv LC_CTYPE en_GB.UTF-8
+setenv _R_CHECK_TIMINGS_ 10
+setenv _R_CHECK_INSTALL_DEPENDS_ TRUE
+setenv _R_CHECK_SUGGESTS_ONLY_ TRUE
+setenv _R_CHECK_NO_RECOMMENDED_ TRUE
+setenv _R_CHECK_DEPRECATED_DEFUNCT_ true
+setenv _R_CHECK_REPLACING_IMPORTS_ true
+setenv _R_CHECK_S3_METHODS_NOT_REGISTERED_ true
+setenv _R_CHECK_OVERWRITE_REGISTERED_S3_METHODS_ true
+
+setenv WNHOME /usr/local/wordnet-3.0
+setenv _R_CHECK_VIGNETTES_NLINES_ 10000
+setenv _R_CHECK_VIGNETTES_SKIP_RUN_MAYBE_ true
+setenv _R_CHECK_TESTS_NLINES_ 0
+
+
+## devtools checks compilation of Rcpp code which fails under CC
+nohup gmake -j8 -k RDEV=Rgcc CFC.out DeLorean.out DiffusionRgqd.out MfUSampler.out Rcpp.out RcppClassic.out RcppArmadillo.out RcppEigen.out RcppGSL.out RcppHoney.out RcppNumerical.out RcppParallel.out Rdtq.out Kmisc.out bayesplot.out devtools.out eDMA.out eggCounts.out imager.out kohonen.out nimble.out plogr.out radiomics.out recexcavAAR.out rstan.out rstanarm.out >&! check_log
+nohup gmake -j10 -k check >>&! check_log

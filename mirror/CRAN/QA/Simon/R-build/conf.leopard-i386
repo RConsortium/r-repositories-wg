@@ -1,0 +1,1 @@
+CC="gcc-4.2 -arch i386 -std=gnu99" CXX="g++-4.2 -arch i386" OBJC="gcc-4.2 -arch i386" F77="gfortran-4.2 -arch i386" FC="gfortran-4.2 -arch i386" CFLAGS='-mtune=core2 -g -O2' CXXFLAGS='-mtune=core2 -g -O2' OBJCFLAGS='-mtune=core2 -g -O2' FCFLAGS='-mtune=core2 -g -O2' F77FLAGS='-mtune=core2 -g -O2' --with-system-zlib --with-ICU --enable-memory-profiling --disable-openmp

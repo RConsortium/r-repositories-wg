@@ -1,0 +1,4 @@
+~/R/svn/R-devel/configure -C --enable-R-shlib \
+--enable-lto=R \
+--with-tcl-config=/usr/local/lib/tclConfig.sh --with-tk-config=/usr/local/lib/tkConfig.sh \
+--x-includes=/opt/X11/include --x-libraries=/opt/X11/lib

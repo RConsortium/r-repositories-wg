@@ -1,0 +1,27 @@
+#!/bin/sh
+
+: ${BASE=/Builds/packages}
+
+WD=`pwd`
+cd "${BASE}"
+
+BIOCREP=`cat bioc.repos` 
+
+# we use meta directories, so make sure "make" is run as needed
+EXTRAREPOS=`cat bioc.repos|sed -n "s|.*|${BASE}/BIOC.new/meta/&/src/contrib|p"`
+EXTRAREPOS="$BASE/CRAN/meta/src/contrib $EXTRAREPOS"
+export EXTRAREPOS
+
+if [ -z "$CHECK" ]; then
+    export SKIP_CHK=1
+fi
+if [ -z "$ALL" ]; then
+    export UPDATE=1
+fi
+
+mainrepos=`head -n 1 bioc.repos`
+for pkg in $BIOCREP; do
+  ./bioc.mk.chk $pkg $mainrepos
+  # not needed - up.repos does that now
+  #./mk.PACKAGES BIOC.bld/$pkg/tiger-universal/bin/2.3.0/
+done

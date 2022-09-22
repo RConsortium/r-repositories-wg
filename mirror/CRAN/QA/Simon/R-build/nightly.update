@@ -1,0 +1,43 @@
+#!/bin/sh
+
+: ${BASE=/Builds/R-builds/nightly}
+: ${RDIRS=`cat $BASE/builds`}
+
+RBUILDS=$BASE
+
+. $BASE/common
+
+PATH=/usr/local/subversion/bin:$PATH:/usr/local/bin
+export PATH
+
+date > $BASE/nightly-up.log
+
+for RD in $RDIRS; do
+    echo "$RD"
+    if [ -e $BASE/$RD/.svn ]; then
+	echo "SVN update on $RD" >> $BASE/nightly-up.log
+	cd $BASE/$RD
+	patchedf=`ls $BASE/patches/*.patch|xargs -n 1 head -n 1`
+	svn revert $patchedf
+	svn up 2>> $BASE/nightly-up.log
+	tools/rsync-recommended 2>> $BASE/nightly-up.log
+	for patch in `ls $BASE/patches/*.patch`; do
+	    pfile=`head -n 1 $patch`
+	    patch "$pfile" < "$patch"
+	done
+    fi
+    if [ $RD = R-beta -o $RD = R-rc ]; then
+	cd $BASE
+	rm -rf R-rc R-beta R-latest.tar.gz
+	echo "Fetching beta" >> $BASE/nightly-up.log
+	curl -O http://cran.r-project.org/src/base-prerelease/R-latest.tar.gz 2>> $BASE/nightly-up.log
+	if [ -e R-latest.tar.gz ]; then
+	    tar fxz R-latest.tar.gz 2>> $BASE/nightly-up.log
+	    if [ ! -e $RD ]; then
+		echo "Missing $RD!" >> $BASE/nightly-up.log
+	    fi
+	fi
+    fi
+done
+
+date >> $BASE/nightly-up.log

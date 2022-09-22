@@ -1,0 +1,11 @@
+CC=/usr/local/clang-noOMP/bin/clang
+OBJC=/usr/local/clang-noOMP/bin/clang
+CXX=/usr/local/clang-noOMP/bin/clang++
+FC=gfortran
+CFLAGS="-g -O3 -Wall -pedantic"
+FFLAGS="-g -O2 -mtune=native -Wall -pedantic"
+CXXFLAGS="-g -O3 -Wall -pedantic -frtti"
+CPPFLAGS="-isystem /usr/local/clang/include"
+JAVA_HOME=/usr/lib/jvm/java-11
+LDFLAGS="-L/usr/local/clang/lib64 -L/usr/local/lib64"
+#SHLIB_OPENMP_FFLAGS=

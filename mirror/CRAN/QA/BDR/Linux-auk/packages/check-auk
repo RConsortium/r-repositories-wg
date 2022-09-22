@@ -1,0 +1,22 @@
+#! /bin/csh
+set path=(~/bin /usr/local/bin /usr/local/texbin /usr/sbin /home/ripley/bin $path)
+setenv PKG_CONFIG_PATH /usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+
+~/R/packages/update
+
+cd ~/R/svn
+svn up R-devel R-3-4-branch
+setenv CRAN_RSYNC ~/R/packages
+R-devel/tools/rsync-recommended
+cd ~/R
+make -C R-devel -j10
+
+cd ~/R/packages
+/home/ripley/R/R-devel/bin/Rscript unavailable.R
+env DISPLAY=:5 /home/ripley/R/R-devel/bin/Rscript updates.R
+
+cd tests-devel
+make unpack
+./script
+cat check_log
+echo 'done'

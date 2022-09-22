@@ -1,0 +1,19 @@
+#!/bin/sh
+
+BASE=/Builds/R-builds/nightly
+export BASE
+
+: ${server=r}
+
+#GUIDMG=`sort $BASE/GUIs|uniq|sed 's/.*/&.dmg/'`
+#ssh $server '/usr/bin/rm -f wwwfiles/R??-branch*.dmg wwwfiles/R-*.dmg'
+FS=`ls $BASE/web/index.html $BASE/deploy/*/*/universal/R*.pkg $BASE/deploy/*/*/universal/R*-universal.tar.gz $BASE/web/log-* $BASE/deploy/*/*/universal/R*.dmg`
+for fn in $FS; do
+    ok=`find "$fn" -mtime -1`
+    if [ -n "$ok" ]; then
+	scp "$fn" $server:wwwfiles/
+    fi
+done
+ssh $server 'wwwfiles/rmold'
+
+# scp web/index.html r:wwwfiles/

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+BASE=/Builds/packages
+
+. ${BASE}/common
+
+echo "Updating extralibs from BioC using R $rver"
+
+rver=`echo $rver | sed 's:\.[0-9]\{1,\}$::'`
+
+echo "update.packages('/Builds/packages/${oscode}-universal/extralib/${rver}', 'http://www.bioconductor.org/packages/release/bioc', ask=FALSE)" | R_LIBS="/Builds/packages/${oscode}-universal/extralib/${rver}" $RBIN --vanilla --slave

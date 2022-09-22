@@ -1,0 +1,15 @@
+#! /bin/csh
+~/R/packages/InUse.R ~/R/packages/tests-clang-trunk || exit 1
+~/R/packages/InUse.R ~/R/test-clang || exit 1
+
+set path=(~/bin /usr/local/bin /usr/local/texbin ~/bin /usr/sbin $path)
+setenv PKG_CONFIG_PATH /usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+
+cd ~/R/svn/R-devel
+svn up
+env CRAN_RSYNC=/data/gannet/ripley/R/packages tools/rsync-recommended
+cd ~/R/R-clang-trunk
+make -j20
+~/R/R-clang-trunk/bin/Rscript -e 'update.packages(.Library, ask = F)'
+cd ~/R/packages/tests-clang-trunk
+make unpack;script

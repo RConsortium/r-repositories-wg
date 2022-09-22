@@ -1,0 +1,5 @@
+CFLAGS="-g -Wall -pedantic -std=gnu99"
+FFLAGS="-g"
+CXXFLAGS=-g
+FCFLAGS=-g
+JAVA_HOME=/usr/lib/jvm/jre-11

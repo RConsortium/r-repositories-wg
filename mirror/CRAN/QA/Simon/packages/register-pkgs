@@ -1,0 +1,92 @@
+#!/usr/bin/perl
+#
+# Usage: register-pkgs [<path> [<table> [<extension>]]]
+#
+# use =<file> as <path> if only one file is to be added
+
+$root='/Builds/packages';
+
+use DBI;
+
+$path=shift;
+$tabname=shift;
+$ext=shift;
+
+$path="$root/CRAN/src/contrib" if ($path eq '');
+$tabname="pkgs" if ($tabname eq '');
+$ext=".tar.gz" if ($ext eq '');
+
+if ($path=~/^=(.*)/) {
+    @fl = ( $1 );
+    if (! -e "$fl[0]") {
+	die "ERROR: $fl[0] does not exist\n";
+    }
+} else {
+    if (! -d "$path") {
+	die "ERROR: $path is not a directory\n";
+    }
+    @fl=<$path/*$ext>;
+}
+
+$dbargs = {AutoCommit => 1,	
+	   PrintError => 1};
+
+$dbh = DBI->connect("dbi:SQLite:dbname=$root/packages.db","","",$dbargs);
+if ($dbh->err()) { die "ERROR on connect: $DBI::errstr\n"; }
+
+$mktab = $dbh->prepare("create table if not exists $tabname (id integer primary key autoincrement, file unique, lmod, hash, name, version, type, title, depends, suggests, imports, enhances, maintainer, built, verify);");
+if ($dbh->err()) { die "ERROR on prepare mktab: $DBI::errstr\n"; }
+$mktab->execute;
+$mktab->finish;
+
+$chkmod=$dbh->prepare("SELECT lmod FROM $tabname WHERE file=?;");
+if ($dbh->err()) { die "ERROR on prepare chkmod: $DBI::errstr\n"; }
+$ins=$dbh->prepare("INSERT OR REPLACE INTO $tabname (file, lmod, hash, name, version, type, title, depends, suggests, imports, enhances, maintainer, built) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+if ($dbh->err()) { die "ERROR on prepare ins: $DBI::errstr\n"; }
+
+foreach $fn (@fl) {
+    @st = stat $fn;
+    $chkmod->execute($fn);
+    if ($dbh->err()) { die "ERROR on execute chkmod: $DBI::errstr\n"; }
+    ($dbmod) = $chkmod->fetchrow_array;
+    $chkmod->finish;
+    if ($dbmod eq '' || $dbmod ne $st[9]) { ## we have to insert this one
+	print "processing $fn\n";
+	$hash=`md5 -q $fn`; chomp $hash;
+	undef %e;
+	@q = `tar fxzO $fn \*/DESCRIPTION 2>/dev/null`;
+	$last='undef';
+	foreach (@q) {
+	    s/[\r\n]+//g;
+	    if (/^\s/) { # continuation
+		s/^\s+/ /;
+		$e{$last}.=$_;
+	    } elsif (/([^:]+):\s*(.*)/) {
+		$last = ucfirst(lc($1)); # force Xxxx
+		$e{$last} = $2;
+	    }
+	}
+	if ($e{Package} ne '') {
+	    $name = $e{Package};
+	    $type = "pkg";
+	} elsif ($e{Bundle} ne '') {
+	    $name = $e{Bundle};
+	    $type = "bundle";
+	} else {
+	    print STDERR "ERROR: file $fn is neither Package nor Bundle\n";
+	    undef $name;
+	}
+	if ($name ne '') {
+	    $ins->execute($fn, $st[9], $hash, $name, $e{Version}, $type, $e{Title},
+			  $e{Depends}, $e{Suggests},
+			  $e{Imports}, $e{Enhances}, $e{Maintainer}, $e{Built});
+	    if ($dbh->err()) { die "ERROR on execute ins: $DBI::errstr\n"; }
+	    $ins->finish;
+	}
+    } else {
+	print "$fn (not modified)\n";
+    }
+}
+$chkmod->finish;
+$dbh->disconnect;
+

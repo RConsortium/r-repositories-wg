@@ -1,0 +1,66 @@
+<html lang="en"><head>
+<title>Building R for Windows</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name=description content="Building R for Windows">
+<link rel=stylesheet href="Rtech.css">
+</head>
+
+<body>
+
+<h2>Pre-compiled software</h2>
+
+
+<p> The current version of the packaged installer for the tools to
+  build R and packages with compiled code is at
+<a href="http://cran.r-project.org/bin/windows/Rtools/"><tt>http://cran.r-project.org/bin/windows/Rtools/</tt></a>.
+
+
+<p>
+The <a href="R30x.html">components</a> of the software to build R itself,
+and
+<a href="libs.html">additional software to build packages</a>.
+This can also be used to build R-devel against the binary distributions it comtains
+
+<p>
+ICU <a href="goodies/ICU_531.zip">packaged</a> for use with R 3.1.1 and later. 
+Unzip this anywhere (it unpacks to a single directory <tt>ICU</tt>)
+and set the location in <tt>MkRules.local</tt>.
+
+<p>
+The GDAL <a href="goodies/gdalUtils.zip">executables</a>
+for use by the package called <tt>gdalUtils</tt>.
+
+<h2>texinfo version 5.x</h2>
+
+for use with R 3.0.3 and later.  Download and unzip
+<a href="texinfo5.zip"><tt>texinfo5.zip</tt></a> in a empty directory:
+its README file contains instructions for use.
+
+Currently GNU texinfo 5.2 with sources at
+<a href="sources/texinfo-5.2.tar.xz"><tt>texinfo-5.2.tar.xz</tt></a> 
+
+<h2>Additional tools</h2>
+
+<p>
+Directory <a href="goodies">goodies</a> also contains some tools.
+These are 32-bit executables, so will run on any version of Windows.
+
+<p>
+<a href="goodies/file-5.03.zip".<tt>file-5.03.zip</tt></a> is a build of the
+<tt>file</tt> found on Unix-alikes.  It will be used by <tt>R CMD check</tt>,
+and is contained in <tt>Rtools212.exe</tt> and later.
+
+<p>
+<a href="goodies/xzutils.zip".<tt>xzutils.zip</tt></a> is a build of the
+<tt>xz utils 4.999.9</tt> which provides command-line tools to manipulate
+files compressed with <tt>xz</tt> as well as some versions of <tt>lzma</tt>
+compression.
+
+<p>
+<a href="goodies/gettext-tools.zip".<tt>gettext-tools.zip</tt></a> are the GNU
+gettext tools used for working with message translations.  You will
+want these to use <tt>tools::update_package_po</tt>.
+
+
+</body></html>
+

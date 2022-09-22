@@ -1,0 +1,72 @@
+#!/bin/sh
+
+: ${BASE=/Builds/R-builds/nightly}
+: ${RDIRS=`cat $BASE/builds`}
+
+RBUILDS=$BASE
+
+. $BASE/common
+
+date > $BASE/nightly.log
+
+rm -f $BASE/GUIs $BASE/R-GUI-*.tar.gz
+
+: ${rebuild=yes}
+
+for RD in $RDIRS; do
+    echo "$RD"
+    ok=yes
+    if [ $rebuild = yes ]; then
+	if [ -e $BASE/$RD/.svn ]; then
+	    echo "SVN update on $RD" >> $BASE/nightly.log
+	    cd $BASE/$RD
+	    svn up 2>> $BASE/nightly.log
+	    tools/rsync-recommended 2>> $BASE/nightly.log
+	fi
+	
+	if [ $ARCH = i386 ]; then
+	    cd $BASE
+	    ./buildR $RD i386 $oscode-i386
+	    # run on remote ppc machine:
+	    # ./buildR $RD ppc $oscode-ppc
+            # sync $BASE/$oscode-ppc/ with us
+	else
+	    echo "Sorry, I cannot build universal binaries on ppc machines"
+	    exit 1
+	fi
+    fi
+
+    if [ $ok = yes ]; then
+	if [ $rebuild = yes ]; then
+	    cd $BASE
+	    ./universal
+	fi
+
+	if [ -e $BASE/$oscode-universal/SUCCESS ]; then
+	    echo "Universal framework built successfully." >> $BASE/nightly.log
+	    cd $BASE/Mac-GUI
+	    echo "Updating Mac-GUI" >> $BASE/nightly.log
+	    svn up 2>> $BASE/nightly.log
+	    SVNREV=`sed -n 's/.*revision="\(.*\)".*/\1/p' .svn/entries|head -n 1`
+	    CURRENT_R_VER=`readlink /Library/Frameworks/R.framework/Versions/Current`
+	    SHORTVER=`echo ${CURRENT_R_VER} | sed 's/^\([0-9]\{1,\}\.[0-9]\).*/\1/'`
+	    BLD=/Builds
+	    BSTYLES="Debug Deployment"
+	    for bst in $BSTYLES; do
+		cd $BASE/Mac-GUI
+		rm -rf $BLD/$bst $BLD/R.build
+		echo "Mac-GUI for $SHORTVER, $bst" >> $BASE/nightly.log
+		LANG=en_US.UTF-8 xcodebuild -alltargets -configuration $bst 2>> $BASE/nightly.log
+		if [ -e $BLD/$bst/R.app/Contents/MacOS/R ]; then
+		    cd $BLD/$bst
+		    chgrp -Rh admin R.app
+		    chmod -R g+w R.app
+		    find R.app -name .svn |xargs rm -rf
+		    tar fcz $BASE/R-GUI-$SVNREV-$SHORTVER-$bst.tar.gz R.app
+		    echo "R-GUI-$SVNREV-$SHORTVER-$bst" >> $BASE/GUIs
+		fi
+		rm -rf $BLD/$bst $BLD/R.build
+	    done
+	fi
+    fi
+done

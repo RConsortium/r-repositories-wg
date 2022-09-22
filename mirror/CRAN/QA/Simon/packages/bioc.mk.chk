@@ -1,0 +1,48 @@
+#!/bin/sh
+
+: ${BASE=/Builds/packages}
+
+RBUILDS="$BASE"
+
+if [ x$1 = x ]; then
+    echo ""
+    echo " Usage: $0 <app/version> [<app/version of target Rlibs>]"
+    echo ""
+    exit 1
+fi
+
+. "$RBUILDS/common"
+
+ROOT="$RBUILDS"
+# old (<=1.7)
+#: ${SRCBIOC="$ROOT/BIOC"}
+#: ${BLDBIOC="$ROOT/BIOC.bld"}
+# new (>=1.8)
+: ${SRCBIOC="$ROOT/BIOC.new"}
+: ${BLDBIOC="$ROOT/BIOC.new/bin"}
+: ${METABIOC="$SRCBIOC/meta"}
+
+AV=$1
+if [ ! -e "$SRCBIOC/$AV" ]; then
+   echo "$SRCBIOC/$AV doesn't exist" >&2
+   exit 1
+fi
+
+RSVER=`echo $rver|sed 's/\([0-9]\{1,\}\.[0-9]\{1,\}\).*/\1/'`
+if [ "x$2" = x ]; then
+    RLIB="$BLDBIOC/$AV/$biname/Rlib/$RSVER"
+else
+    RLIB="$BLDBIOC/$2/$biname/Rlib/$RSVER"
+fi
+export RLIB
+export RLIBS="$RLIB:$ROOT/$biname/Rlib/$RSVER"
+
+mkdir -p "$BLDBIOC" 2> /dev/null    
+export OUTBASE="$BLDBIOC/$AV"
+export CRANBASE="$SRCBIOC/$AV"
+export METABASE="$METABIOC/$AV"
+
+OWD=`pwd`
+cd "$ROOT"
+./mk.chk $3
+cd "$OWD"

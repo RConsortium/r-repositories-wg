@@ -1,0 +1,9 @@
+#CFLAGS="-g -O2 -Wall -pedantic -mtune=native"
+#CXXFLAGS="-g -O2 -Wall -pedantic -mtune=native"
+CFLAGS="-g -O2 -Wall -pedantic -mtune=native -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong -fstack-clash-protection -fcf-protection"
+CXXFLAGS="-g -O2 -Wall -pedantic -mtune=native -Wno-ignored-attributes -Wno-parentheses -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong -fstack-clash-protection -fcf-protection"
+FFLAGS="-g -O2 -mtune=native -Wall -pedantic"
+CPPFLAGS='-I/data/blackswan/ripley/extras/include -I/usr/local/include'
+LDFLAGS='-L/data/blackswan/ripley/extras/lib64 -L/usrlocal/lib64'
+R_LD_LIBRARY_PATH='/data/blackswan/ripley/extras/lib64:/usr/local/lib64'
+JAVA_HOME=/usr/lib/jvm/java-11

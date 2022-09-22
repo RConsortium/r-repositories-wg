@@ -1,0 +1,1 @@
+5 2 * * * /Users/ripley/R/packages/check-devel > /Users/ripley/R/packages/check-devel.log 2>&1

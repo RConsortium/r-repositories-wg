@@ -1,0 +1,1 @@
+(cd src/gnuwin32; make MkRules rbuild rpackages-cross cairodevices)

@@ -1,0 +1,26 @@
+RDEV=/data/gannet/ripley/R/R-clang-trunk/bin/R
+RLIBS=~/R/test-clang
+R_MAKEVARS = 
+
+
+include ../Makefile.common
+
+%.out: %.in
+	@echo $* ...
+	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
+	@mkdir -p ~/R/packages/install-C++/Libs/$*-lib
+	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= R_MAKEVARS_USER=$(R_MAKEVARS) time -f "Time %E, %U + %S" $(RDEV) CMD INSTALL -l ~/R/packages/install-C++/Libs/$*-lib $* >$@ 2>&1
+	@echo ... $* done
+
+check: $(OUTS)
+
+clean:
+	find * -maxdepth 0 -type d -exec rm -rf {} \;
+	rm -f *.in
+
+veryclean: clean
+	rm -f *.out
+
+
+unpack:
+	@Rscript unpack.R

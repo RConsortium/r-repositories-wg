@@ -1,0 +1,15 @@
+#! /bin/csh
+~/R/packages/InUse.R ~/R/packages/tests-noLD || exit 1
+~/R/packages/InUse.R ~/R/test-dev || exit 1
+
+set path=(~/bin /usr/local/texbin /usr/local/bin ~/bin /usr/sbin $path)
+setenv PKG_CONFIG_PATH /usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+
+cd ~/R/svn/R-devel
+svn up
+env CRAN_RSYNC=/data/gannet/ripley/R/packages tools/rsync-recommended
+cd ~/R/R-devel-noLD
+make -j20
+~/R/R-devel-noLD/bin/Rscript -e 'update.packages(.Library, ask = F)'
+cd ~/R/packages/tests-noLD
+make all

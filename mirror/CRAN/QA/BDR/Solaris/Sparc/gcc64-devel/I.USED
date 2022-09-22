@@ -1,0 +1,6 @@
+setenv PKG_CONFIG_PATH /usr/local/lib/sparcv9/pkgcontrib:/opt/csw/lib/sparcv9/pkgconfig:/usr/lib/sparcv9/pkgconfig
+env LD_LIBRARY_PATH=/usr/local/lib/sparcv9:/opt/csw/lib/sparcv9  \
+~/R/svn/R-devel/configure -C \
+  --disable-long-double --with-internal-tzcode \
+  --with-tcl-config=/usr/local/lib/sparcv9/tclConfig.sh \
+  --with-tk-config=/usr/local/lib/sparcv9/tkConfig.sh

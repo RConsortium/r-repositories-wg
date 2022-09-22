@@ -1,0 +1,100 @@
+\input texinfo
+@c %**start of header
+@setfilename external_libs.info
+@settitle External Libraries for CRAN packages
+@documentlanguage en
+
+@titlepage
+@title External Libraries for CRAN packages
+@author CRAN Repository Maintainers
+@end titlepage
+
+CRAN packages may wish to link to external libraries (or rarely, invoke
+other software) that needs to be installed on the CRAN check machines
+(which the CRAN policy prefers to including in the package).  Requests
+to add software should be sent to @code{CRAN@@R-project.org} and where
+relevant copied to those responsible for the binary packages (see the
+CRAN policy).
+
+Java SDKs (currently OpenJDK of various versions including 11 and 17)
+are installed on all the CRAN platforms, as are @command{JAGS} and
+@command{ghostscript}.  Most but not all systems have MPI support
+installed.
+
+Email addresses for those named are of the form
+@samp{@var{First.Lastname}@@R-project.org}.
+
+
+@c @node Linux, macOS
+@unnumbered Linux
+
+CRAN checks are done on several Debian (including incoming checks) and
+Fedora machines.  Software will only be installed on the Debian machines
+that is available from Debian repositories for `testing'.
+The @code{rcheckserver} meta-package available from the AASC repository
+at @uref{https://statmath.wu.ac.at/AASC/debian} provides all system
+dependencies used for the Debian checks.
+
+For Fedora, requests to add RPMs from official repositories are
+preferred, but at our discretion software may be installed from
+elsewhere (as has been done for @command{pandoc}) or compiled from
+source (as may be needed for the fedora-clang checks).  No information
+is publicly available on what RPMs are already installed as it differs
+by machine.
+
+Be aware that adding software to the Linux machines needs the time of
+busy sysadmins, not just the CRAN team.
+
+@c @node macOS, Windows, Linux
+@unnumbered macOS
+
+External libraries are made for both macOS architectures @emph{via}
+Simon Urbanek's `recipes' system at
+@uref{https://github.com/R-macos/recipes}.  Tested updates to these
+recipes or new recipes should be requested at GitHub or emailed to him,
+failing which he can be asked to help to prepare a recipe.
+
+An idea of what external libraries are currently available can be found
+at
+@uref{https://mac.r-project.org/bin/darwin17/x86_64/}
+and
+@uref{https://mac.r-project.org/bin/darwin20/arm64/}
+with installation instructions at
+@uref{https://mac.r-project.org/bin/}.
+
+Requests to add or update other software (which in the past have
+included @command{cmake} and @command{pandoc}) should be sent to the
+maintainer, Simon Urbanek, with as much detail as possible.
+
+There is no MPI support.  Although OpenMPI can be installed, only dynamic
+linking works and so cannot be used portably.
+
+JAGS may or may not be available.  There is an `official' release for
+both architectures at
+@uref{https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/}.
+
+@c @node Windows,  , macOS
+@unnumbered Windows
+
+The build system for Windows changed with 4.2.0 and only that
+is considered here (and only 64-bit Windows is now supported).
+
+Building of external libraries is done using MXE
+(@uref{https://mxe.cc/}).  That has an extensive set of packages
+(@uref{https://github.com/mxe/mxe/blob/master/src}), and users can
+contribute others (@uref{https://mxe.cc/#creating-packages}).  For
+external libraries not already available, the best approach is to
+contribute to the MXE library. For advice, consult Tomas Kalibera.
+
+Common build tools are installed using Msys2 (@uref{https://www.msys2.org/}).
+
+GDAL executables are currently available via a
+@c From https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/setup_checks.ps1
+QGIS installation
+(@uref{https://qgis.org/downloads/QGIS-OSGeo4W-3.22.0-4.msi}), but this
+may change in future.
+
+Requests to add or update other software should be sent to the
+maintainer, Uwe Ligges, with as much detail as possible.
+
+@bye

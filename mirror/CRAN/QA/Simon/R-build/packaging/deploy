@@ -1,0 +1,72 @@
+#!/bin/sh
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/subversion/bin
+export PATH
+
+if [ -z "${CONF}" ]; then
+    CONF="$1"
+fi
+if [ -z "${CONF}" ]; then
+    CONF=conf
+fi
+if [ ! -e "${CONF}" ]; then
+    echo "** ERROR: cannot find configuration file ${CONF}"
+    exit 1
+fi
+
+. "${CONF}"
+
+if [ -z "${VER}" ]; then
+    echo "** ERROR: configuration file doesn't contain necessary settings"
+    exit 1
+fi
+
+echo ""
+echo " Target path: ${RRPATH}"
+echo "  - R ${VERFULL}, GUI ${GUIVER} (${GUISVN})"
+echo ""
+
+if [ ! -e "${RRPATH}/R-${VER}-mini/Packages/R-Framework.pkg" ]; then
+    echo "** ERROR: the build seems to be invomplete. Please run build first."
+    exit 1
+fi
+
+if [ -z "${MINIONLY}" ]; then
+echo " - Creating R-${VER}.dmg .."
+rm -f /tmp/template.sparseimage
+echo "   - mount template image"
+bzip2 -d -c "${BASE}/template.sparseimage.bz2" > /tmp/template.sparseimage
+hdiutil mount /tmp/template.sparseimage > /dev/null
+echo "   - copy contents"
+rsync -a "${RRPATH}/R-${VER}/" --exclude .DS_Store /Volumes/template
+echo "   - rename to R-${VER}"
+diskutil rename /Volumes/template R-${VER} > /dev/null
+WD=`pwd`
+cd /Volumes/R-${VER}
+/Developer/Tools/SetFile -a V bg.jpg
+cd "${WD}"
+hdiutil unmount /Volumes/R-${VER} > /dev/null
+echo "   - compress final image"
+rm -f "${RRPATH}/R-${VER}.dmg"
+hdiutil create -srcdevice /tmp/template.sparseimage "${RRPATH}/R-${VER}.dmg" > /dev/null
+fi
+
+echo " - Creating R-${VER}-mini.dmg .."
+rm -f /tmp/template.sparseimage
+echo "   - mount template image"
+bzip2 -d -c "${BASE}/template.sparseimage.bz2" > /tmp/template.sparseimage
+hdiutil mount /tmp/template.sparseimage > /dev/null
+echo "   - copy contents"
+rsync -a "${RRPATH}/R-${VER}-mini/" --exclude .DS_Store /Volumes/template
+echo "   - rename to R-${VER}-mini"
+diskutil rename /Volumes/template R-${VER}-mini > /dev/null
+WD=`pwd`
+cd /Volumes/R-${VER}-mini
+/Developer/Tools/SetFile -a V bg.jpg
+cd "${WD}"
+hdiutil unmount /Volumes/R-${VER}-mini > /dev/null
+echo "   - compress final image"
+rm -f "${RRPATH}/R-${VER}-mini.dmg"
+hdiutil create -srcdevice /tmp/template.sparseimage "${RRPATH}/R-${VER}-mini.dmg" > /dev/null
+
+echo "Done."

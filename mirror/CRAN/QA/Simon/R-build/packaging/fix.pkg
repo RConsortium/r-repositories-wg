@@ -1,0 +1,12 @@
+#!/bin/sh
+
+PL="$1/Contents/Info.plist"
+if [ ! -e "$PL" ]; then
+    echo "Cannot find $PL"
+    exit 1
+fi
+chmod +w "$PL"
+cp "$PL" /tmp/1pl
+sed 's/>bundle</>plist</' /tmp/1pl > "$PL"
+chmod -w "$PL"
+rm -f /tmp/1pl

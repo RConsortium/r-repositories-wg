@@ -1,0 +1,10 @@
+#!/bin/csh
+source ~/R/packages/common.csh
+
+setenv _R_CHECK_DEPENDS_ONLY_ true
+
+setenv R_LIBS ~/R/test-dev
+
+foreach f ($*)
+~/R/R-devel/bin/R CMD check --extra-arch  $f
+end

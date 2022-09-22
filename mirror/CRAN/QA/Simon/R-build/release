@@ -1,0 +1,15 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+    echo ''
+    echo " Usage: $0 <directory>"
+    echo ''
+    exit 1
+fi
+
+RDIRS=$1
+RRELEASE=1
+export RDIRS
+export RRELEASE
+./nightly.build
+

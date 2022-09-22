@@ -1,0 +1,22 @@
+CC="cc -xc99 -m64"
+CFLAGS="-O -xlibmieee -xtarget=native"
+F77="f95 -m64"
+FFLAGS="-O4 -xtarget=native"
+CXX="CC -m64"
+CXXFLAGS="-O -xtarget=native"
+CXX1X="/opt/csw/bin/g++ -m64"
+CXX1XFLAGS="-O2"
+CXX1XPICFLAGS=-fPIC
+FC=$F77
+FCFLAGS=$FFLAGS
+FCLIBS=-lfsu
+#FLIBS="-R/opt/solarisstudio12.3/prod/lib/v9 -lifai -lsunimath -lfai -lfai2 -lfsumai -lfprodai -lfminlai -lfmaxlai -lfminvai -lfmaxvai -lfui -lsunmath -lmtsk /opt/solarisstudio12.3/prod/lib/sparc/64/libfsu.so.1"
+LDFLAGS="-L/usr/local/lib/sparcv9 -L/opt/csw/lib/sparcv9"
+R_LD_LIBRARY_PATH="/opt/developerstudio12.5/lib/v9:/usr/local/lib/sparcv9:/opt/csw/lib/sparcv9"
+
+
+JAVA_HOME=/opt/jdk1.7.0_65/jre
+JAVA_CPPFLAGS="-I${JAVA_HOME}/../include -I${JAVA_HOME}/../include/solaris"
+JAVA_LIBS='-L${JAVA_HOME}/lib/sparcv9/server -R${JAVA_HOME}/lib/sparcv9/server -ljvm'
+JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/sparcv9/server
+

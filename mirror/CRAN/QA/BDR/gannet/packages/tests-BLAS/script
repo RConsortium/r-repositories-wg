@@ -1,0 +1,15 @@
+#!/bin/csh
+setenv DISPLAY :5
+limit cputime 30m
+
+setenv _R_CHECK_FORCE_SUGGESTS_ false
+setenv LC_CTYPE en_GB.utf8
+setenv RMPI_INCLUDE /usr/include/openmpi-x86_64
+setenv RMPI_LIB_PATH /usr/lib64/openmpi/lib
+setenv RMPI_TYPE OPENMPI
+setenv R_BROWSER false
+setenv R_PDFVIEWER false
+
+setenv _R_INSTALL_USE_FC_LEN_T_  true
+
+nohup make -j30 -k check >&! check_log

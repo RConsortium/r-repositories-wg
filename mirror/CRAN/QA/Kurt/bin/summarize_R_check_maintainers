@@ -1,0 +1,8 @@
+#! /bin/sh
+
+dir=${1:-${HOME}/tmp/CRAN}
+
+cd "${dir}" && \
+    grep -H "^Maintainer:" *.Rcheck/*/DESCRIPTION | \
+    sed 's|\.Rcheck/.*/DESCRIPTION:|: |'
+    

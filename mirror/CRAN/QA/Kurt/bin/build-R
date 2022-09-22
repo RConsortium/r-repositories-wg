@@ -1,0 +1,22 @@
+#! /bin/sh
+
+MAKE=${MAKE-"make -j2"}
+
+check="check"
+args=""
+while test -n "${1}"; do
+  case "${1}" in
+    -a) check="check-all"   ;;
+    -d) check="check-devel" ;;
+    -n) check="${check} all-basic-tests=\"Examples Specific Reg\"" ;;
+    -nn) check="${check} all-basic-tests=\"Examples Specific\"" ;;
+    *)  args="${args} ${1}" ;;
+  esac
+  shift
+done
+
+(Rconf ${args} \
+  && ${MAKE} \
+  && ${MAKE} vignettes \
+  && ${MAKE} install-info infodir=`./bin/R RHOME`/share/info \
+  && eval ${MAKE} ${check}) 2>&1 | tee ~/tmp/R_`date +%FT%T`.log

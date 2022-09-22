@@ -1,0 +1,10 @@
+#! /usr/bin/env Rscript
+ref <- "../tests-devel"
+this <- "gcc12"
+source('../pkgdiff.R')
+stp <- readLines('../stoplist2')
+stp <- c(stp, 'RDieHarder', 'rmumps')
+f1 <- sub("[.]out$", "", dir('/data/ftp/pub/bdr/gcc11', patt = "[.]out$"))
+f2 <- sub("[.]log$", "", dir('/data/ftp/pub/bdr/gcc11', patt = "[.]log$"))
+
+junk <- pkgdiff(unique(c(f1,f2,stp)))

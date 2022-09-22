@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# rsync package check results with deployment server
+
+: ${BASE=/Builds/packages}
+: ${server=r}
+
+SKIP_R_CHK=1
+
+. ${BASE}/common
+
+if [ -z "${oscode}" ]; then
+    echo "** ERROR: oscode is empty, check your installation."
+    exit 1
+fi
+
+OWD=`pwd`
+cd "$BASE"
+
+versions=`sed -e 's/:.*//' $BASE/vers`
+for v in $versions; do
+   rsync -avz --delete ${oscode}-universal/results/$v/ ${server}:/R/build/${oscode}-universal/results/$v/
+done
+
+cd "$OWD"

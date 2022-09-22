@@ -1,0 +1,37 @@
+#! /usr/bin/env Rscript
+pkg <- commandArgs(TRUE)
+pkg <- basename(pkg)
+pkg <- sub("_.*", "", pkg)
+
+setwd(paste0(pkg, ".Rcheck"))
+
+
+pkgdiff <- function(from, to)
+{
+    clean <- function(txt)
+    {
+        txt <- grep("^(\\* using R|\\* using log|Time|File) ", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
+	txt <- grep("00check.log'$", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
+	txt <- grep("^\\* using platform", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
+        txt <- grep("real.*user.*sys", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
+        gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes=TRUE)
+    }
+
+    left <- clean(readLines(from, warn = FALSE))
+    left <- sub("/NMUs/[^/]*[.]Rcheck/", "/tests-devel/", left, useBytes = TRUE)
+    right <- clean(readLines(to, warn = FALSE))
+    if(length(left) != length(right) || !all(left == right)) {
+        cat("\n*** ", from, "\n", sep="")
+        writeLines(left, a <- tempfile("Rdiffa"))
+        writeLines(right, b <- tempfile("Rdiffb"))
+        system(paste("diff -bw", shQuote(a), shQuote(b)))
+    }
+}
+
+l1 <- Sys.glob("*.out")
+to <- "../../tests-devel"
+l2 <- Sys.glob(file.path(to, "*.out"))
+l3 <- basename(l2)
+options(stringsAsFactors = FALSE)
+m <- merge(data.frame(x=l1), data.frame(x=l3, y=l2))[,1]
+mm <- lapply(m, function(x) pkgdiff(x, file.path(to, x)))

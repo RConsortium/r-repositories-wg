@@ -1,0 +1,25 @@
+TARS:=$(wildcard src/contrib/*.tar.gz)
+#DIRS:=$(shell for i in `find bin/* -name bin -type d`; do find $${i} -name ?.?.? -type d; done) $(shell find ?.? -type d|grep contrib)
+#BINS:=$(shell find $(DIRS) -name \*.tgz)
+
+METADIRS:=meta/src/contrib
+DESCS = $(TARS:%.tar.gz=meta/%.DESCRIPTION)
+
+all: cache
+
+cache: meta $(METADIRS) $(DESCS)
+	../rmdup 'meta/src/contrib/*.DESCRIPTION'
+
+meta:
+	ln -s ../CRAN.meta meta
+
+$(METADIRS):
+	mkdir -p $@
+
+meta/%.DESCRIPTION: %.tar.gz
+	tar fxzO $< `echo $< | sed -e 's:.*/::' -e 's:_.*::'`/DESCRIPTION > $@
+
+meta/%.DESCRIPTION: %.tgz
+	tar fxzO $< \*/DESCRIPTION > $@
+
+.PHONY: all cache

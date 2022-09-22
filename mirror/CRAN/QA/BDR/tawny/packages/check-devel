@@ -1,0 +1,7 @@
+#! /bin/csh
+setenv LC_COLLATE C
+setenv PKG_CONFIG_PATH /usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/usr/local/ggobi/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig
+set path = (. ~/bin /usr/local/bin /opt/subversion/bin /usr/texbin/ $path)
+
+cd ~/R
+./check-tawny

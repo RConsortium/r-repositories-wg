@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+$cmd=shift;
+if ($cmd eq '-h' || $cmd =~/^--h/) {
+    print "\n Usage: sync-src-bin [--rm]\n\n"; exit 0;
+}
+
+@a=`ls -dF bin/*/*/*/*|grep /\$`;
+foreach (@a) { s/bin\///g; s/[\r\n]+//g; s/\/tiger-universal.*//g; $path{$_}=1; };
+@dirs=sort(keys %path);
+foreach $rep (@dirs) {
+#    print "$rep\n";
+    @f=<bin/$rep/tiger-universal/bin/*/*.tgz>;
+    foreach (@f) {
+	$src=$_; $src=~s/.*\/(.*?)\.tgz$/$1\.tar\.gz/; $src="$rep/src/contrib/$src";
+	if (-e $src) {
+#	    print "OK  $_\n";
+	} else {
+	    print "$_\n"; # $src
+	    unlink $_ if ($cmd eq '--rm');
+	}
+    }
+}
+
+

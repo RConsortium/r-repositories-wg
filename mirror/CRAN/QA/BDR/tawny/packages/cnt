@@ -1,0 +1,3 @@
+grep 'Status.*ERROR' [A-Z]*.out
+grep 'Status.*ERROR' [a-l]*.out
+grep 'Status.*ERROR' [m-z]*.out

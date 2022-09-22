@@ -1,0 +1,8 @@
+CXX="g++ -fsanitize=address,undefined,bounds-strict -fno-omit-frame-pointer"
+FC=gfortran
+CFLAGS="-g -O2 -Wall -pedantic -mtune=native -fsanitize=address"
+FFLAGS="-g -O2 -mtune=native"
+CXXFLAGS="-g -O2 -Wall -pedantic -mtune=native -Wno-ignored-attributes -Wno-deprecated-declarations"
+MAIN_LDFLAGS="-fsanitize=address,undefined -pthread"
+
+JAVA_HOME=/usr/lib/jvm/java-11

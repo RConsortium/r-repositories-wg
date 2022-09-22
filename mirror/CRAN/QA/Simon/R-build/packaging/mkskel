@@ -1,0 +1,166 @@
+#!/bin/sh
+
+# ALL=1      call build+deploy
+# CLEAN=1    remove previous build
+# MINIONLY=1 build mini package only
+# GUIPATH    [/Applications]
+# FWPATH     [/Library/Framework/R.framework]
+
+: ${BASE=/Builds/R-builds/nightly/packaging}
+TP="${BASE}/template"
+
+if [ -n "$1" ]; then
+	echo "Using config file: $1"
+	. "$1"
+fi
+
+# due to a bug in sed we have to use C locale (Leopard runs in UTF8 by default which fails)
+if [ -n "${LANG}" ]; then
+    LANG=C
+    export LANG
+fi
+
+echo " - Detecting build settings"
+
+if [ -z "${FWPATH}" ]; then
+	FWPATH=/Library/Frameworks/R.framework
+fi
+
+RBIN="${FWPATH}/Resources/bin/R"
+VERFULL=`"${RBIN}" --version|sed -n -e 's/R version \(.\{0,\}\)$/\1/p'`
+if [ -z "${VERFULL}" ]; then
+	echo "Cannot determine full version."
+	exit 1
+fi
+VER=`echo "${VERFULL}"|sed -n -e 's/^\([0-9.]\{3,\}\).\{0,\}/\1/p'`
+if [ -z "${SVN}" ]; then
+	SVN=`echo "${VERFULL}"|sed -n -e 's/.\{0,\} r\([0-9]\{1,\}\)).\{0,\}/\1/p'`
+fi
+if [ -z "${SVN}" ]; then
+	SVN=`echo "cat(R.version[['svn rev']])"|"${RBIN}" --slave`
+fi
+
+NPVER=`echo "${VER}"|tr -d .`
+VERSH=`echo "${VER}"|sed -e 's/\.[0-9]$//'`
+RLVER=`ls "${FWPATH}/Resources/lib/libreadline"*dylib|sed -n -e 's/.\{0,\}readline\.\([0-9]\.[0-9]\).\{0,\}/\1/p'`
+RRPATH="${BASE}/R-${NPVER}-CRAN"
+
+if [ -z "${GUIPATH}" ]; then
+	GUIPATH=/Applications
+fi
+
+if [ ! -e "${GUIPATH}/R.app/Contents/Resources/English.lproj/InfoPlist.strings" ]; then
+	echo "** ERROR: ${GUIPATH}/R.app is not a valid GUI (set GUIPATH when necessary)"
+	exit 1
+fi
+
+GUIVER=`sed -n -e '/CFBundleGetInfoString/ s/.*GUI \([0-9.]\{3,\}\).*/\1/p' "${GUIPATH}/R.app/Contents/Resources/English.lproj/InfoPlist.strings"`
+GUISVN=`sed -n -e '/CFBundleGetInfoString/ s/.*(\([0-9]\{1,\}\)).*/\1/p' "${GUIPATH}/R.app/Contents/Resources/English.lproj/InfoPlist.strings"`
+
+echo ""
+echo " R  : VER=$VER, SVN=$SVN, VERSH=$VERSH, VERFULL=$VERFULL"
+echo "      FWPATH=$FWPATH, RBIN=$RBIN"
+echo " GUI: GUIVER=$GUIVER, GUISVN=$GUISVN"
+echo " rl : $RLVER"
+echo " pkg: RRPATH=$RRPATH"
+echo ""
+
+if [ -z "${GUISVN}" -o -z "${GUIVER}" ]; then
+    echo "** ERROR: unable to find out GUI version/revision (possibly a pre-release?)"
+    exit 1;
+fi
+
+export RRPATH
+export VER
+export VERFULL
+export VERSH
+export SVN
+export GUIVER
+export GUISVN
+export RLVER
+export BASE
+export TP
+export FWPATH
+export MINIONLY
+
+if [ -n "${CLEAN}" ]; then
+    echo " - cleaning previous build (CLEAN is set)"
+    "${BASE}/sudo/cleanrr"
+fi
+
+if [ -e "${RRPATH}" ]; then
+	echo "${RRPATH} exists, please remove it to start from scratch (or use CLEAN=1)."
+	exit 1
+fi
+
+echo " - Copying template ..."
+mkdir "${RRPATH}"
+ditto "${TP}" "${RRPATH}"
+
+echo " - Creating configuration script ..."
+
+echo "BASE='${BASE}'" > "${RRPATH}/conf"
+echo "RRPATH='${RRPATH}'" >> "${RRPATH}/conf"
+echo "VER='${VER}'" >> "${RRPATH}/conf"
+echo "VERSH='${VERSH}'" >> "${RRPATH}/conf"
+echo "VERFULL='${VERFULL}'" >> "${RRPATH}/conf"
+echo "SVN='${SVN}'" >> "${RRPATH}/conf"
+echo "GUIVER='${GUIVER}'" >> "${RRPATH}/conf"
+echo "GUISVN='${GUISVN}'" >> "${RRPATH}/conf"
+echo "RLVER='${RLVER}'" >> "${RRPATH}/conf"
+echo "NPVER='${NPVER}'" >> "${RRPATH}/conf"
+echo "TP='${TP}'" >> "${RRPATH}/conf"
+echo "FWPATH='${FWPATH}'" >> "${RRPATH}/conf"
+echo "MINIONLY='${MINIONLY}'" >> "${RRPATH}/conf"
+
+echo "${RRPATH}" > "${BASE}/last"
+
+mkdir -p "${RRPATH}/R-${VER}/Packages"
+mkdir -p "${RRPATH}/R-${VER}-mini/Packages"
+
+echo " - Substituting settings"
+for f in `find ${RRPATH} -type f`; do
+    "${BASE}/envs" "$f" "$f"
+done
+
+echo " - Converting to binary XML ..."
+for f in `find ${RRPATH} -name "*.pmproj"`; do
+    /usr/bin/plutil -convert binary1 $f
+done
+
+# create target cont directories (we have removed them from SVN to avoid .svn pollution)
+mkdir -p "${RRPATH}/R-fw/cont" 2>/dev/null
+mkdir -p "${RRPATH}/GUI/cont/R.app" 2>/dev/null
+
+echo " - Copying R framework ..."
+"${BASE}/sudo/mkfw"
+#sudo /bin/sh -c 'tar fc - "${FWPATH}"|tar fx - -C  "${RRPATH}/R-fw/cont"'
+#echo " - Fixing permissions ..."
+#sudo chmod 41775 "${RRPATH}/R-fw/cont/Library"
+
+# remove FC-cache if there is some left
+rm -rf "${RRPATH}/R-fw/cont/Library/Frameworks/R.framework/Resources/fontconfig/cache/*"
+
+echo " - Copying GUI ..."
+ditto "${GUIPATH}/R.app" "${RRPATH}/GUI/cont/R.app"
+
+if [ -z "$MINIONLY" ]; then
+    if [ ! -e "${BASE}/common" ]; then
+	echo " - Extracting common files ..."
+	tar fxj "${BASE}/common.tar.bz2" -C "${BASE}"
+    fi
+    echo " - Copying supplemental tools ..."
+    echo "   - GNU Fortran"
+    ditto "${BASE}/common/gfortran.pkg" "${RRPATH}/R-${VER}/Packages/gfortran.pkg"
+    echo "   - Tcl/Tk"
+    ditto "${BASE}/common/tcltk.pkg" "${RRPATH}/R-${VER}/Packages/tcltk.pkg"
+fi
+
+if [ -n "$ALL" ]; then
+    echo " - calling build"
+    "${BASE}/build" "${RRPATH}/conf"
+    echo " - calling deploy"
+    "${BASE}/deploy" "${RRPATH}/conf"
+fi
+
+echo "Done \"${RRPATH}\" created."

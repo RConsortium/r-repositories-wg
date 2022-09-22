@@ -1,0 +1,40 @@
+#!/bin/sh
+
+: ${BASE=/Builds/packages}
+
+OWD=`pwd`
+cd "$BASE"
+
+target=tiger-universal
+. $BASE/version
+
+#--------------------------------------------------------------
+ftn="$target/$ver"
+: ${sync=yes}
+
+./cran.rep CRAN . --html $ftn > html/cran.html
+echo "<h2>Package build reports</h2><p>Target: <b>$target</b><br>R version: <b>$ver</b><p>Report date: <b>`date`</b><p>" > html/index.html
+echo "<a href=cran.html>CRAN</a><p>" >> html/index.html
+
+mkdir -p $BASE/html/$target/results/$ver/html 2> /dev/null
+rsync -a --delete $BASE/$target/results/$ver/html/ $BASE/html/$target/results/$ver/html/
+
+bioc=`cat $BASE/bioc.repos`
+for rep in $bioc; do
+    mkdir -p "$BASE/html/$rep" 2> /dev/null
+    ./cran.rep BIOC.new/$rep BIOC.new/bin/$rep --html $ftn > html/$rep/index.html
+    echo "<a href=$rep/index.html>$rep</a><br>" >> html/index.html
+    # possibly there are no reports if everything compiled fine
+    if [ -e $BASE/BIOC.new/bin/$rep/$target/results/$ver/html ]; then
+	mkdir -p $BASE/html/$rep/$target/results/$ver/html 2> /dev/null
+	rsync -a --delete $BASE/BIOC.new/bin/$rep/$target/results/$ver/html/ $BASE/html/$rep/$target/results/$ver/html/
+    else
+	rm -rf $BASE/html/$rep/$target/results/$ver/html
+    fi
+done
+
+cd "$OWD"
+
+if [ $sync = yes ]; then
+    rsync --rsync-path=./rsync -a --delete $BASE/html/ r:wwwfiles/reports/
+fi

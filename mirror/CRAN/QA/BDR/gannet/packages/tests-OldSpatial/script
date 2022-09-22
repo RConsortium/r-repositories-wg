@@ -1,0 +1,9 @@
+#!/bin/csh
+source /data/gannet/ripley/R/packages/common.csh
+set path = ( /usr/local/OldSpatial/bin/ $path )
+setenv PKG_CONFIG_PATH /usr/local/OldSpatial/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+
+setenv _R_CHECK_PKG_SIZES_ false
+
+nohup make -j30 -k check >&! check_log
+

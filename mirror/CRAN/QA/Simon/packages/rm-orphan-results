@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+#  Moves ../results/ver/pkg.* to ../orphans/ver if source for pkg doesn't exist
+#  Versions to check come from "vers", target is tiger-universal (darwin8) or leaoprd-universal (otherwise)
+#
+#  OSCODE (tiger,leopard,..), VERS (list of versions) or SRC (location of sources)
+#  can be specified manually if necessary
+
+ROOT=/Builds/packages
+
+# determine defaults
+DEF_VERS=`sed 's/:.*//' $ROOT/vers`
+maj=`uname -r|sed 's:\..*::'`
+if [ "$maj" = 8 ]; then DEF_OSCODE=tiger; else DEF_OSCODE=leopard; fi
+
+: ${OSCODE="$DEF_OSCODE"}
+: ${VERS="$DEF_VERS"}
+: ${SRC="$ROOT/CRAN/src/contrib"}
+
+for ver in $VERS; do
+    LOC=$ROOT/$OSCODE-universal/results/$ver
+    if [ -e "$LOC" ]; then
+	echo "Checking $LOC vs $SRC"
+
+	ORPH=`echo "${LOC}"|sed 's:/results/:/orphan/:'`
+	mkdir -p "$ORPH"
+	for i in `ls -d $LOC/*.tar|sed -e 's:.*/::' -e 's:.tar$::'|sort|uniq`; do
+	    if ls $SRC/${i}_* >/dev/null 2>/dev/null; then
+		echo "OK  $i" > /dev/null
+	    else
+		echo "*** $i"
+		mv "$LOC/$i."* "$ORPH"
+	    fi
+	done
+    fi
+done

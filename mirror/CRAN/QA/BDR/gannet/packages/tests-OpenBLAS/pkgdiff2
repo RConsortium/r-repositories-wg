@@ -1,0 +1,7 @@
+#! /usr/bin/env Rscript
+foo <- dir('/data/ftp/pub/bdr/Rblas/OpenBLAS', patt="[.]out$")
+foo <- sub("[.]out$", "", foo)
+ref <- "../tests-devel"
+this <- "OpenBLAS"
+source('../pkgdiff.R')
+junk <- pkgdiff(c(foo, readLines('../stoplist2')))

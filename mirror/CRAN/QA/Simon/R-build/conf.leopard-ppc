@@ -1,0 +1,1 @@
+CC="gcc-4.2 -arch ppc -std=gnu99" CXX="g++-4.2 -arch ppc" OBJC="gcc-4.2 -arch ppc" F77="gfortran-4.2 -arch ppc" FC="gfortran-4.2 -arch ppc" --with-system-zlib --enable-memory-profiling --disable-openmp

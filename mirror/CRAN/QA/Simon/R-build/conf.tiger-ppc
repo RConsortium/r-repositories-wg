@@ -1,0 +1,1 @@
+CC="gcc -arch ppc -std=gnu99" OBJC="gcc -arch ppc -std=gnu99" CXX="g++ -arch ppc" F77="gfortran -arch ppc" FC="gfortran -arch ppc" --enable-BLAS-shlib --with-system-zlib

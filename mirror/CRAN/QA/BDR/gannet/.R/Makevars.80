@@ -1,0 +1,5 @@
+CC = /usr/local/gcc8/bin/gcc -std=gnu99 -fsanitize=address,undefined -fno-omit-frame-pointer -fsanitize=signed-integer-overflow
+F77 = /usr/local/gcc8/bin/gfortran -fsanitize=address
+FC = /usr/local/gcc8/bin/gfortran -fsanitize=address
+FCFLAGS = -g -O2 -mtune=native -fbounds-check
+FFLAGS = -g -O2 -mtune=native -fbounds-check

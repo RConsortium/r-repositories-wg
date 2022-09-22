@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+
+print "<table>\n";
+while(<>) {
+    s/[\r\n]+//g;
+    @a=split /\|/;
+    $a[4]=~s/<.*>//g;
+    $a[0]="<b>$a[0]</b>";
+    print "<tr><td>", join("</td><td>",@a),"</td></tr>\n";
+}
+print "</table>\n";

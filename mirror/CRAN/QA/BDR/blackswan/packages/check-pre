@@ -1,0 +1,26 @@
+#! /bin/csh
+
+~/R/packages/InUse.R ~/R/packages/tests-pre || exit 1
+
+setenv PKG_CONFIG_PATH /data/blackswan/ripley/extras/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+set path=(/data/blackswan/ripley/bin /usr/local/bin /usr/local/texbin /usr/sbin $path /usr/lib64/openmpi/bin)
+
+(cd /data/blackswan/ripley/R/packages; ./update)
+setenv CRAN_RSYNC /data/blackswan/ripley/R
+cd /data/blackswan/ripley/R/svn/R-3-6-branch
+svn up
+tools/rsync-recommended
+cd /data/blackswan/ripley/R/R-pre
+make -j20
+
+cd /data/blackswan/ripley/R/packages
+~/R/packages/revdeps1 ~/R/R-pre/site-library ~/R/packages/tests-pre/revdeps.rds
+/data/blackswan/ripley/R/R-pre/bin/Rscript unavailable.R
+env DISPLAY=:5 /data/blackswan/ripley/R/R-pre/bin/Rscript updates.R
+~/R/packages/revdeps2 ~/R/R-pre/site-library ~/R/packages/tests-pre/revdeps.rds
+rm -r ~/R/packages/tests-pre/revdeps.rds
+cd tests-pre
+make unpack
+./script
+cat check_log
+echo 'done'

@@ -1,0 +1,8 @@
+## used for gcc10 and gcc11
+
+# warnings in a different order
+RDieHarder
+RGtk2
+Rserve
+rmumps
+

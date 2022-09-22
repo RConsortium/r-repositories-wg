@@ -1,0 +1,28 @@
+Rolling back
+------------
+
+- go to .../contrib/Archive/pkgname, find the latest version there,
+  cross-check it is earlier than the currently published version and
+  CRAN-pack it.
+
+That will put the current version into the Archive, hence the need to
+be careful if the package has previously been rolled back.
+
+- Reomve the symlink in .../contrib to the previous version, and run
+  CRAN-package-list.
+
+- I often add an X-CRAN-History note to PACKAGES.in as to what was done and why.
+
+- 'touch' the newly re-published tarball.
+
+- Inform people doing checks (CRAN and perhaps individually Simon,
+  Tomas and Uwe) that it has been rolled back.  Some of my scripts
+  will notice a newer tarball date, but in other cases I need to
+  manually reinstall the package.
+
+Rolling back is best done immediately.  This might avoid binary
+packages being published, and avoid other submissions/updates being
+published which depend on the new version (rare, but has happened).
+However, it removes any check results from the new version (and the
+submissions team might forget about them if no errors are showing on
+the currently published checks).

@@ -1,0 +1,86 @@
+<html lang="en"><head>
+<title>Building R-patched and R-devel for Windows</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name=description content="Building R-patched and R-devel for Windows">
+<link rel=stylesheet href="Rtech.css">
+</head>
+
+<body>
+
+<p>
+This page is for R 2.14.2 and later.
+
+<h2>Multilib toolchain</h2>
+
+The current toolchain is based on Mingw-w64's build of gcc pre-4.6.3
+and version 2.0.1 of their runtime (for both 32- and 64-bit builds).
+See the 'R Installation and Administration Manual' for how to make use of it.
+
+<p>
+This is part of <tt>Rtools215.exe</tt> and later available from
+<a href="http://cran.r-project.org/bin/windows/Rtools/">here<a>
+and separately as <a href="multilib/multi.zip"><tt>multi.zip</tt><a> (53MB)
+
+<p>
+Note that this is a <em>multilib</em> toolchain.  All the tools are 32-bit Windows
+executables, so this toolchain can be run on 32- or 64-bit Windows.
+Generating 64-bit code is selected by a flag (for the compilers,
+<tt>-m64</tt>).
+
+<p>
+The toolchain contains separate 32- and 64-bit versions of <tt>gdb</tt>:
+either its <tt>bin32</tt> or <tt>bin64</tt> directory can put in your path
+or <tt>/path/to/binxx/gdb.exe</tt> used directly.
+
+<p>
+All the sources are in the <tt><a href="multilib">multilib</a></tt> directory.
+
+
+<h3>OpenMP and pthreads</h3>
+
+Three alternative implementations of <tt>pthreads</tt> are available,
+<tt><a href="multilib/pthreads-w32.zip">pthreads-w32</a></tt>,
+<tt><a href="multilib/winpthreads.zip">winpthreads</a></tt>
+and
+<tt><a href="multilib/winpthreads-static.zip">winpthreads-static</a></tt>:
+all unpack to the same location as the candidate toolchain.
+These are needed to support OpenMP and can also be used on their own.
+<p>
+<tt>pthreads-w32</tt> is a more mature implementation, but based only on 
+DLLs which you would need to ship with a package that makes use of it.
+Further, as those DLLs are licensed under LGPL, you need to meet their
+licence requirements (the sources are
+<a href="sources/pthreads-win32.tar.gz">here</a>).
+<p>
+<tt>winpthreads</tt> is from the `experimental' branch of the
+MinGW-w64 project.  The two versions differ in using DLLs and static
+linking: there are some known problems (at least with the DLL version)
+for 64-bit builds with packages using C++.
+<p>
+The current toolchain packaging includes static <tt>winpthreads</tt>,
+which has proved to be the most satisfactory..
+
+<h3>Tcl/Tk</h3>
+
+32-bit build of Tcl/Tk:
+<a href="R_Tcl_8-5-8.zip"><tt>R_Tcl_8-5-8.zip</tt></a>.
+<br>
+64-bit build of Tcl/Tk:
+<a href="R64a_Tcl_8-5-8.zip"><tt>R64a_Tcl_8-5-8.zip</tt></a>.
+
+<p>
+The procedures and scripts used to compile the <tt>Tcl</tt> directory
+and in particular to produce the help file are at
+<a href="https://svn.r-project.org/R-packages/trunk/R-Tcl-win/"><tt>https://svn.r-project.org/R-packages/trunk/R-Tcl-win/</tt></a>.
+The sources used were
+<a href="sources/tcl8.5.8-src.tar.gz"><tt>tcl8.5.8-src.tar.gz</tt></a>,
+<a href="sources/tk8.5.8-src.tar.gz"><tt>tk8.5.8-src.tar.gz</tt></a>, 
+<a href="sources/BWidget-1.8.0.tar.bz2"><tt>BWidget-1.8.0.tar.bz2</tt></a> and
+<a href="sources/Tktable2.9.tar.gz"><tt>Tktable2.9.tar.gz</tt></a>.
+</p>
+
+Note that this was done using the Microsoft compilers: the software can
+be compiled using Mingw-w64 but crashes R.
+
+</body></html>
+

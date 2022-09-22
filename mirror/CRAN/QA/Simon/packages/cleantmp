@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# this script should NOT be run while there is some build in progress..
+
+rm -rf /tmp/CRAN.bld.* /tmp/R.INSTALL* /tmp/Rtmp*

@@ -1,0 +1,7 @@
+#! /usr/bin/env Rscript
+ref <- "../tests-devel"
+this <- "gcc11"
+source('../pkgdiff.R')
+stp <- readLines('../stoplist2')
+
+junk <- pkgdiff(stp)

@@ -1,0 +1,7 @@
+#!/bin/csh
+source ~/R/packages/common.csh
+setenv _R_CHECK_LENGTH_1_LOGIC2_ abort,verbose
+
+foreach f ($*)
+~/R/R-devel/bin/R CMD check --extra-arch $f
+end

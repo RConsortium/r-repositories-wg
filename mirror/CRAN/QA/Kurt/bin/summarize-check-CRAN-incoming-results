@@ -1,0 +1,23 @@
+#! /usr/bin/Rscript --default-packages=NULL
+### -*- R -*-
+
+R_scripts_dir <- normalizePath(file.path("~", "lib", "R", "Scripts"))
+
+more <- FALSE
+
+dir <- file.path(normalizePath("~"), "tmp", "CRAN")
+
+args <- commandArgs(trailingOnly = TRUE)
+
+if(any(ind <- args %in% c("-m", "--more"))) {
+    more <- TRUE
+    args <- args[!ind]
+}
+if(length(args)) {
+    dir <- args[1L]
+}
+
+## No point in providing a '-a' argument, as 'all = TRUE' is used by
+## default.
+
+tools::summarize_check_packages_in_dir_results(dir, full = more)

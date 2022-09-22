@@ -1,0 +1,8 @@
+setenv PKG_CONFIG_PATH /usr/local/lib/amd64/pkgconfig:/opt/csw/lib/amd64/pkgconfig:/usr/lib/amd64/pkgconfig
+env LD_LIBRARY_PATH=/usr/local/lib/amd64 \
+  ~/R/svn/R-devel/configure -C \
+  --with-internal-tzcode \
+  --with-tcl-config=/usr/local/lib/amd64/tclConfig.sh \
+  --with-tk-config=/usr/local/lib/amd64/tkConfig.sh
+
+

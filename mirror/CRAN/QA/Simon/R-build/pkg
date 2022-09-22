@@ -1,0 +1,86 @@
+#!/bin/sh
+#
+# optional: set PKGONLY=1 if you want to package from the
+#           currently installed files (otherwise tar balls are used)
+
+# -- configurable paths needed for operation --
+ROOT=/Builds/nightly
+XCODE=/Developer
+
+
+# make sure the PATH contains sbin for chmod etc.
+PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/X11/bin:/usr/local/bin
+export PATH
+
+if [ -z "$1" ]; then
+    echo ''
+    echo " Usage: $0 <r-name>"
+    echo ''
+    echo ' Note: must be run as root'
+    echo ''
+    exit 1
+fi
+
+WD=`pwd`
+RNAME="$1"
+DEP="${ROOT}/deploy/leopard/$1/universal"
+PKGDIR="${ROOT}/packaging/leopard/"
+oscode=leopard
+
+rm -rf "$PKGDIR/R.pkg"
+
+if [ -z "$PKGONLY" ]; then
+
+if [ ! -e "$DEP/SUCCESS" ]; then
+    echo "ERROR: the nightly build was not sucessful"
+    exit 1
+fi
+
+if [ ! -e "$DEP/$RNAME-$oscode-universal.tar.gz" ]; then
+    echo "ERROR: cannot find tar ball $RNAME-$oscode-universal.tar.gz"
+    exit 1
+fi
+
+echo "-- restoring framework and GUIs from tar balls"
+
+GUI32=`ls $DEP/R-GUI-*-Leopard.tar.gz|sort|tail -n 1`
+GUI64=`ls $DEP/R-GUI-*-Leopard64.tar.gz|sort|tail -n 1`
+if [ -z "$GUI32" ]; then
+    echo "ERROR: cannot find 32-bit R.app tar ball"
+    exit 1
+fi
+if [ -z "$GUI64" ]; then
+    echo "ERROR: cannot find 64-bit R.app tar ball"
+    exit 1
+fi
+
+if [ `id -u` != 0 ]; then
+    echo "This script needs to be run as root so it can adjust permissions"
+    exit 1
+fi
+
+rm -rf /Library/Frameworks/R.framework
+tar fxz "$DEP/$RNAME-$oscode-universal.tar.gz" -C /
+
+rm -rf /Applications/R.app /Applications/R64.app
+
+tar fxz "$GUI64" -C /Applications/
+mv /Applications/R.app /Applications/R64.app
+tar fxz "$GUI32" -C /Applications/
+
+else # PKGONLY=1
+    echo "-- running in packaging mode only"
+fi 
+
+chown -Rh root:admin /Applications/R.app /Applications/R64.app
+chmod -R g+w /Applications/R.app /Applications/R64.app
+
+cd "$PKGDIR"
+./mkdoc
+rm -f "$DEP/$RNAME-$oscode.pkg"
+${XCODE}/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker -d R.pmdoc -o "$DEP/$RNAME-$oscode.pkg"
+chown urbanek:admin "$DEP/$RNAME-$oscode.pkg"
+
+echo ''
+echo " Package created: $DEP/$RNAME-$oscode.pkg"
+echo ''

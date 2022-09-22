@@ -1,0 +1,89 @@
+#!/usr/bin/perl
+# create a fat GTK+ framework from multiple single-arch builds
+# merges all binaries into fat files and glibconfig.h correspondingly
+#$Id: mkfat 2288 2008-09-30 20:22:55Z urbaneks $
+#
+# Typical usage:
+# - build GTK+ for arch $arch (e.g. i386) into $root
+#   (e.g. /Library/Frameworks/GTK+.framework/Versions/2.14.X11)
+# - rename version by appending .$arch (i.e. from 2.14.X11 to 2.14.X11.i386)
+# - build next $arch and repeat above for all desired archs
+# - run ./mkfat $root
+
+$root=shift;
+
+if ($root eq '') {
+  print STDERR "\nNo root specified\n\n Usage example: mkfat /Library/Frameworks/GTK+.framework/Versions/2.14.X11\n\n Expects per-architecture builds in \$root.$arch directory\n\n";
+  exit 1;
+}
+
+@archs=('i386','ppc','x86_64','ppc64');
+
+sub sys {
+#    print "> $_[0]\n";
+    system $_[0];
+    if ($? == -1) {
+        print "system $_[0]\nERROR: failed to execute: $!\n";
+        exit 1;
+    } elsif ($? & 127) {
+        printf "system $_[0]\nERROR: died with signal %d, %s coredump\n",
+        ($? & 127),  ($? & 128) ? 'with' : 'without';
+        exit 2;
+    } else {
+        $ev=$? >> 8;
+        if ($ev != 0) {
+            printf "system $_[0]\nERROR: exited with value %d\n", $? >> 8;
+            exit 3;
+        }
+    }
+    1;
+}
+
+if (-e "$root") {
+  print STDERR "\nroot ($root) should not exist, it will be created\n";
+  exit 1;
+}
+
+foreach $arch (@archs) {
+  if (-e "$root.$arch") {
+    print "- $arch\n";
+    if (! -e "$root") { # primary architecture
+      print "  copying $arch to create a basis...\n";
+      sys "ditto '$root.$arch' '$root'";
+      print "  create skeleton glibconfig.h...\n";
+      open IN, "$root.$arch/Resources/lib/glib-2.0/include/glibconfig.h";
+      @a=<IN>;
+      close IN;
+      open OUT, ">$root/Resources/lib/glib-2.0/include/glibconfig.h";
+      print OUT "#if __${arch}__\n";
+      print OUT @a;
+      print OUT "\n#else\n#error \"Unsupported architecture\"\n#endif\n";
+      close OUT;
+    } else {
+      print "  merging binaries...\n";
+      @cand=`diff -r $root $root.$arch | sed -n 's:^Binary files ::p' | sed -e 's: differ\$::'`;
+      foreach (@cand) {
+	  chop;
+	  ($dst,$src)=split / and /;
+	  if ($dst=~/Resources\/bin/ || $dst=~/Resources\/lib/) {
+	      if (`ls -l '$dst'|grep ^l` eq '') {
+		  sys "lipo -create '$dst' '$src' -o '$dst'";
+	      }
+	  }
+      }
+      print "  merging glibconfig.h...\n";
+      open IN, "$root/Resources/lib/glib-2.0/include/glibconfig.h";
+      @a=<IN>;
+      close IN;
+      open OUT,	">$root/Resources/lib/glib-2.0/include/glibconfig.h";
+      print OUT	"#if __${arch}__\n";
+      open IN, "$root.$arch/Resources/lib/glib-2.0/include/glibconfig.h";
+      while (<IN>) { print OUT $_; }
+      close IN;
+      print OUT "\n#else\n";
+      print OUT	@a;
+      print OUT	"\n#endif\n";
+      close OUT;
+    }
+  }
+}

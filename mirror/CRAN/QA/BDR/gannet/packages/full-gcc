@@ -1,0 +1,10 @@
+#! /bin/csh
+~/R/packages/InUse.R ~/R/packages/tests || exit 1
+
+set path=(~/bin /usr/local/bin /usr/local/texbin /usr/sbin $path /usr/lib64/openmpi/bin)
+setenv PKG_CONFIG_PATH /usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+
+cd ~/R/packages
+Rpat -f reinstall.R
+make -C ~/R/packages/tests backup veryclean unpack
+~/R/packages/check-gcc

@@ -1,0 +1,27 @@
+#!/bin/csh
+setenv R_CRAN_WEB http://cran.r-project.org
+setenv DISPLAY :5
+#setenv _R_CHECK_CRAN_INCOMING_ true
+setenv _R_CHECK_FORCE_SUGGESTS_ FALSE
+setenv _R_CHECK_VC_DIRS_ TRUE
+setenv _R_CHECK_UNSAFE_CALLS_ TRUE
+setenv _R_CHECK_TIMINGS_ 10
+setenv _R_CHECK_INSTALL_DEPENDS_ TRUE
+setenv _R_CHECK_SUGGESTS_ONLY_ TRUE
+setenv _R_CHECK_NO_RECOMMENDED_ TRUE
+setenv _R_CHECK_SUBDIRS_NOCASE_ TRUE
+setenv _R_CHECK_EXECUTABLES_EXCLUSIONS_ false
+setenv _R_CHECK_ALWAYS_LOG_VIGNETTE_OUTPUT_ true
+setenv _R_CHECK_DOC_SIZES2_ true
+setenv _R_CHECK_XREFS_USE_ALIASES_FROM_CRAN_ true
+setenv R_C_BOUNDS_CHECK yes
+setenv _R_CHECK_CRAN_INCOMING_USE_ASPELL_ true
+setenv _R_CHECK_WARN_ON_NAMESPACE_ true
+setenv _R_CHECK_CODE_ASSIGN_TO_GLOBALENV_ true
+setenv _R_CHECK_CODE_ATTACH_ true
+setenv _R_CHECK_EXIT_ON_FIRST_ERROR_ true
+
+setenv R_LIBS ~/R/test-3.3:~/R/test-Omegahat
+foreach f ($*)
+~/R/R-devel-vg/bin/R CMD check --extra-arch --use-valgrind $f
+end

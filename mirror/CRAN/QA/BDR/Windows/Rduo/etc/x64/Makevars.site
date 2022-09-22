@@ -1,0 +1,20 @@
+BOOSTLIB=c:/R/Support/boost_1_52_0
+CLP_PATH=c:/R/Support/Clp64
+GLPK_HOME=c:/R/Support/glpk64
+GGOBI_PATH=c:/packages/ggobi64/dev
+GTK_PATH= c:/R/W64/GTK-2.22
+JAGS_ROOT=c:/packages/JAGS/JAGS-4.0.0
+LIB_HDF5=c:/R/Support/h5-libwin
+LIB_SBML=c:/packages/SBML/win64
+LIB_XML=c:/R/local
+NLOPT_HOME=c:/R/Support/nlopt
+QUANTLIB_ROOT=c:/R/Support/Quantlib
+SYMPHONY_HOME=c:/R/Support/symphony64
+UDUNITS=c:/R/local
+
+# LIB_BZIP2=/R/W64/R-devel/src/extra/bzip2
+LIB_GSL=c:/R/local
+
+# for EBImage
+GTK_BASEPATH=c:/R/W64/GTK-2.22
+IM_BASEPATH=c:/packages/ImageMagick-6.7.4-Q16-x64

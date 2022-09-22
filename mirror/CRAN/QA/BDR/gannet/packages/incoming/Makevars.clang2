@@ -1,0 +1,2 @@
+CC = clang -fsanitize=undefined -fno-sanitize=float-divide-by-zero -fno-omit-frame-pointer
+CXX = clang++ -std=c++11 -stdlib=libc++ -fsanitize=undefined -fno-sanitize=float-divide-by-zero -fno-omit-frame-pointer

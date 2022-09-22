@@ -1,0 +1,11 @@
+CC=/usr/local/clang5/bin/clang
+OBJC=$CC
+F77="/usr/local/gfortran/bin/gfortran -mtune=native"
+FC=$F77
+FFLAGS="-g -O2 -Wall -pedantic"
+FCFLAGS=$FFLAGS
+CXX=/usr/local/clang5/bin/clang++
+CFLAGS="-g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion"
+CXXFLAGS="-g -O2 -Wall -pedantic"
+LDFLAGS="-L/usr/local/clang5/lib -L/usr/local/lib"
+R_LD_LIBRARY_PATH="/usr/local/clang5/lib:/usr/local/lib:/opt/mosek/6/tools/platform/osx64x86/bin"

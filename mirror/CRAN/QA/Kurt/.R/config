@@ -1,0 +1,56 @@
+case "${host_os}" in
+  linux*)
+    case "${CC}" in
+      clang*)
+	: ${CFLAGS="-g -O3 -Wall -pedantic -mtune=native"}
+	;;
+      *)
+	: ${CFLAGS="-g -O2 -Wall -pedantic -mtune=native"}
+	;;
+    esac
+    case "${CXX}" in
+      clang*)
+	: ${CXXFLAGS="-g -O3 -Wall -pedantic -mtune=native"}
+	;;
+      *)
+	: ${CXXFLAGS="-g -O2 -Wall -pedantic -mtune=native"}
+	;;
+    esac
+    case "${OBJC}" in
+      clang*)
+	: ${OBJCFLAGS="-g -O3 -mtune=native"}
+	;;
+      *)
+	: ${OBJCFLAGS="-g -O2 -mtune=native"}
+	;;
+    esac
+
+    ## <FIXME>
+    ## Temporarily add -fallow-argument-mismatch to Fortran flags when
+    ## using gcc-snapshot.
+    case "${FC}" in
+      /usr/lib/gcc-snapshot*)
+	: ${FCFLAGS="-g -O2 -mtune=native -fallow-argument-mismatch"}
+	: ${FFLAGS="-g -O2 -mtune=native -fallow-argument-mismatch"}
+	;;
+      *)
+	: ${FCFLAGS="-g -O2 -mtune=native"}
+	: ${FFLAGS="-g -O2 -mtune=native"}
+	;;
+    esac
+    ## : ${FCFLAGS="-g -O2 -mtune=native -fno-optimize-sibling-calls"}
+    ## : ${FFLAGS="-g -O2 -mtune=native -fno-optimize-sibling-calls"}
+    ## <FIXME>
+
+    : ${LDFLAGS="-Wl,-O1"}
+    ## Or maybe even
+    ##   LDFLAGS="-Bdirect,--hash-style=both,-Wl,-O1"
+    ## eventually ...
+    
+    ;;
+esac
+
+### Local Variables: ***
+### mode: sh ***
+### sh-basic-offset: 2 ***
+### End: ***

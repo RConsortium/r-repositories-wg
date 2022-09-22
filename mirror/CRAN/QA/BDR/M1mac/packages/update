@@ -1,0 +1,11 @@
+rsync -e ssh -rvCtL --delete --include="*.tar.gz" \
+--include="Meta" --include="Meta/*" \
+--include="PACKAGES*" \
+--include="4.2-patched" --include="4.2-patched/*" --include="4.2-patched/*/*" \
+--include="4.2.*" --include="4.2.*/*" --include="4.2.*/*/*" \
+--include="4.3.0" --include="4.3.0/*" --include="4.3.0/*/*" \
+--exclude="*/*" cran.r-project.org:contrib /Users/ripley/R/packages
+
+rsync -e ssh -rvCtL --delete \
+--include="packages/packages.rds" --include="checks/*.rds" \
+--exclude="*/*" cran.r-project.org:web/ /Users/ripley/R/web

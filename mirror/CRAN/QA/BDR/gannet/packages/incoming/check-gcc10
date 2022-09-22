@@ -1,0 +1,5 @@
+#! /bin/csh
+setenv DISPLAY :5
+mkdir /tmp/Libs
+~/R/R-gcc10/bin/R CMD INSTALL -l /tmp/Libs $*
+rm -rf /tmp/Libs

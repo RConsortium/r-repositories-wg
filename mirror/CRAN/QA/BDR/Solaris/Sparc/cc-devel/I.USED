@@ -1,0 +1,1 @@
+env LD_LIBRARY_PATH=/opt/csw/lib ~/R/svn/R-devel/configure -C --disable-long-double --with-internal-tzcode

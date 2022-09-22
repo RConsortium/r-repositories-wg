@@ -1,0 +1,28 @@
+#!/bin/csh
+source ~/R/packages/common.csh
+limit cputime 90m
+unsetenv _R_CHECK_AUTOCONF_
+unsetenv _R_CHECK_THINGS_IN_CHECK_DIR_
+unsetenv _R_CHECK_THINGS_IN_TEMP_DIR_
+unsetenv _R_CHECK_BASHISMS_
+
+setenv _R_CHECK_ELAPSED_TIMEOUT_ 0
+setenv _R_CHECK_INSTALL_ELAPSED_TIMEOUT_ 0
+
+#setenv _R_CHECK_EXIT_ON_FIRST_ERROR_ true
+
+setenv ASAN_OPTIONS detect_leaks=0
+#setenv ASAN_OPTIONS 'detect_leaks=0:detect_odr_violation=0'
+#setenv ASAN_OPTIONS 'alloc_dealloc_mismatch=0:detect_leaks=0:detect_odr_violation=0'
+setenv UBSAN_OPTIONS 'print_stacktrace=1'
+
+setenv RJAVA_JVM_STACK_WORKAROUND 0
+setenv RGL_USE_NULL true
+setenv R_DONT_USE_TK true
+
+setenv R_LIBS ~/R/test-dev
+setenv R_MAKEVARS_USER ~/.R/Makevars.70
+
+foreach f ($*)
+~/R/gcc-SAN/bin/R CMD check --extra-arch --no-stop-on-test-error $f
+end

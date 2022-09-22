@@ -1,0 +1,15 @@
+#! /bin/sh
+
+dir=${1:-${HOME}/tmp/CRAN}
+
+(cd "${dir}"; \
+for d in *.Rcheck; do
+  p=`basename ${d} .Rcheck`
+  out=`grep '\.\.\. *\(\[.*\]\)\? *\(NOTE\|WARN\|ERROR\)' ${d}/00check.log`
+  if test -z "${out}"; then
+    echo "${p} ... OK"
+  else
+    echo "${p} ... PROBLEM"
+    echo "${out}"
+  fi
+done)

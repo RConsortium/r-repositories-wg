@@ -1,0 +1,1 @@
+CC="gcc-4.2 -arch ppc64 -std=gnu99" CXX="g++-4.2 -arch ppc64" OBJC="gcc-4.2 -arch ppc64" F77="gfortran-4.2 -arch ppc64" FC="gfortran-4.2 -arch ppc64" --with-system-zlib

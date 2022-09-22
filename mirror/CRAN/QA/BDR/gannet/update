@@ -1,0 +1,6 @@
+#! /bin/csh
+cd ~/R
+svn update svn/R-devel svn/R-4-2-branch svn/R-dev-web svn/R-packages svn/R-docs
+cd packages
+./update
+

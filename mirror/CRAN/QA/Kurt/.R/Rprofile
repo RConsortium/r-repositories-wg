@@ -1,0 +1,135 @@
+local({
+    repos <- c(CRAN = "file:///data/Repositories/CRAN")
+
+    ## Try to infer the "right" BioC repository.
+    ## Alternatively, we could hard-wire the BioC versions here.
+    BioC_names <- c("BioCsoft", "BioCann", "BioCexp")
+    BioC_paths <- c("bioc", "data/annotation", "data/experiment")
+    ## BioC_mirror <- "http://www.bioconductor.org"
+    BioC_mirror <- "http://bioconductor.statistik.tu-dortmund.de"
+    BioC_version <-
+        if(getRversion() >= "2.10.0") {
+            if(is.function(tools:::.BioC_version_associated_with_R_version))
+                tools:::.BioC_version_associated_with_R_version()
+            else
+                tools:::.BioC_version_associated_with_R_version
+        } else {
+            basename(dirname(grep("bioc$",
+                                  scan(file.path(R.home("etc"),
+                                                 "repositories"),
+                                       character(),
+                                       comment.char = "#",
+                                       quiet = TRUE),
+                                  value = TRUE)))
+        }
+    dirs <- file.path(sprintf("/data/Repositories/Bioconductor/%s",
+                              BioC_version),
+                      BioC_paths)
+    repos <-
+        c(repos,
+          structure(ifelse(file.exists(file.path(dirs, "src", "contrib",
+                                                 "PACKAGES")),
+                           sprintf("file://%s", dirs),
+                           sprintf("%s/packages/%s/%s",
+                                   BioC_mirror, BioC_version,
+                                   BioC_paths)),
+                    names = BioC_names))
+
+    ## Local Omegahat mirrors via rsync are no longer possible.
+    ## repos <- if(file.exists("/data/Repositories/Omegahat"))
+    ##     c(repos, Omegahat = "file:///data/Repositories/Omegahat")
+    ## else
+    ##     c(repos, Omegahat = "http://www.omegahat.net/R")
+    
+    ## repos <- c(repos, Omegahat = "http://www.omegahat.net/R")
+
+    ## repos <- if(file.exists("/data/Repositories/extra"))
+    ##     c(repos, CRANextra = "file:///data/Repositories/extra")
+    ## else
+    ##     c(repos, CRANextra = "http://www.stats.ox.ac.uk/pub/RWin")
+
+    ## <NOTE>
+    ## Argh.  Using these keeps causing trouble for the CRAN incoming
+    ## checking (most notably for Matrix and lme4).  Hence, for now let
+    ## us not use the R-Forge repository ...
+    ##     repos <- if(file.exists("/data/Repositories/R-Forge"))
+    ##         c(repos, "R-Forge" = "file:///data/Repositories/R-Forge")
+    ##     else
+    ##         c(repos, "R-Forge" = "http://R-Forge.R-project.org/")
+    ## </NOTE>
+
+    options(repos = repos)
+})
+
+options(prompt = "R> ",
+        ## editor = "gnuclient -r /",
+        editor = "emacsclient",
+        browser = "firefox",
+        pdfviewer = "evince",
+        printcmd = "a2ps -2 -q",
+        dvipscmd = "a2ps -2 -q",
+        menu.graphics = FALSE,
+        save.defaults = list(ascii = FALSE, compress = TRUE))
+
+setHook(packageEvent("grDevices", "onLoad"),
+        function(...) {
+            grDevices::ps.options(horizontal = FALSE, pointsize = 14, 
+                                  height = 6, width = 7)
+            if(getRversion() >= "2.7.0" && (.Platform$OS.type == "unix"))
+                grDevices::X11.options(type = "cairo")
+        })
+
+setHook(packageEvent("rJava", "onLoad"),
+        function(...) {
+            ## StanfordCoreNLPjars needs -Xmx3g, but should provide this
+            ## via its own .onLoad() (assuming that it is the one to
+            ## start the JVM, of course).
+            ## <FIXME>
+            ##   Adding "-Xss8m" suggested by Tomas Kalibera to overcome
+            ##   stack protection problems on Linux.  Remove eventually?
+            options(java.parameters =
+                        c(getOption("java.parameters"),
+                          c("-Xrs", "-Xss8m"),
+                          ## Also avoid MTJ warning madness:
+                          "-Dcom.github.fommil.netlib.BLAS=com.github.fommil.netlib.F2jBLAS",
+              
+                          "-Dcom.github.fommil.netlib.LAPACK=com.github.fommil.netlib.F2jLAPACK",
+                          "-Dcom.github.fommil.netlib.ARPACK=com.github.fommil.netlib.F2jARPACK"
+                          ))
+            ## </FIXME>
+        })
+
+## Hack hack hack ...
+## setHook(packageEvent("RSPython", "attach"),
+##         function(...) {
+##             dyn.load("/usr/lib/python2.6/config/libpython2.6.so",
+##                      local = FALSE)
+##         })
+        
+## Could also call pdf.options() similarly (no 'horizontal', though).
+
+options(showErrorCalls = TRUE,
+        showWarnCalls = TRUE,
+        warn = 1)
+
+## When moving towards avoiding partial matching && friends:
+options(warnPartialMatchArgs = TRUE,
+        warnPartialMatchAttr = TRUE,
+        warnPartialMatchDollar = TRUE)
+
+## Ensure CRAN versions where available.
+if(getRversion() >= "2.15.0") {
+    options(available_packages_filters =
+            c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
+}
+
+## ## Ensure using libcurl for url connections and downloads.
+## if(capabilities("libcurl")) {
+##     options(useHTTPS = TRUE,
+##             url.method = "libcurl", 
+##             download.file.method = "libcurl")
+## }
+
+### Local Variables: ***
+### mode: R ***
+### End: ***

@@ -1,0 +1,61 @@
+.SUFFICES:
+.SUFFICES: .out .log
+
+# runs away sometimes
+RNCEP-OPTS = --no-examples
+TSdata-OPTS = --no-vignettes
+# need Perl, on cmd.exe path
+gdata-OPTS = --no-examples --no-tests
+# hangs sometimes
+misc3d-OPTS = --no-examples
+# needs custom latex.
+patchDVI-OPTS = --no-build-vignettes
+
+## flaky web service
+BACA-OPTS = --no-vignettes
+
+## excessive time
+Bergm-OPTS = --no-examples
+atmi-OPTS = --no-examples
+mlmRev-OPTS = --no-examples
+speff2trial-OPTS = --no-examples
+
+PAGI-OPTS = --no-build-vignettes
+abc-OPTS = --no-vignettes
+amei-OPTS = --no-vignettes
+crmPack-OPTS = --no-vignettes
+laGP-OPTS = --no-vignettes
+mcemGLM-OPTS = --no-vignettes
+metaMA-OPTS = --no-vignettes
+mediation = --no-build-vignettes
+ordinalgmifs-OPTS = --no-vignettes
+spikeSlabGAM-OPTS = --no-vignettes
+tgp-OPTS = --no-examples --no-vignettes
+
+
+## crash and remain running.
+glmpath-OPTS = --no-examples
+
+all:
+	-@make --no-print-directory update
+	@make --no-print-directory install
+	@make --no-print-directory -j4 -k check
+
+LOGS=${shell ls *.log}
+check: $(LOGS:.log=.out)
+
+install:
+	@Rscript.exe manip.R LC_COLLATE=C
+
+installn reinstall:
+	@Rscript.exe reinstall.R LC_COLLATE=C
+
+clean:
+	find * -maxdepth 0 -type d -exec rm -rf {} \;
+	rm -f *.in
+
+veryclean: clean
+	rm -f *.out
+
+update:
+	@(cd ../packages; sh update)

@@ -1,0 +1,4 @@
+CC=clang
+CXX=clang++
+CFLAGS=-mtune=native -g -O2 -Wall -pedantic
+CXXFLAGS=-mtune=native -g -O2 -Wall -pedantic

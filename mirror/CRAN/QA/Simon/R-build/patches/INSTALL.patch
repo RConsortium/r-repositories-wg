@@ -1,0 +1,17 @@
+src/scripts/INSTALL.in
+--- /Builds/R-builds/nightly/R-2.3.0/src/scripts/INSTALL.in	2006-04-09 18:19:53.000000000 -0400
++++ INSTALL.in	2006-05-31 19:11:29.000000000 -0400
+@@ -590,7 +590,12 @@
+       if test -n "${srcs}"; then
+ 	## if there is a configure script we install only the main
+ 	## sub-architecture
+-	if test -x ../configure; then
++	##--- BEGIN OS X CRAN CHANGES ---
++	## unfortunately ppc machines are unable to cross-compile
++	## i386 binaries due to missing system libraries
++	: ${NATIVE_ARCH=/`arch`}
++	if test -x ../configure -o ${NATIVE_ARCH} = /ppc; then
++	##--- END OS X CRAN CHANGES ---
+ 	  if test -n "${R_ARCH}"; then
+ 	    arch=`echo ${R_ARCH} | sed s+^/++`
+ 	    message "arch - ${arch}"

@@ -1,0 +1,8 @@
+#! /bin/csh
+~/R/packages/InUse.R ~/R/packages/tests-ATLAS || exit 1
+
+set path=(~/bin /usr/local/bin /usr/local/texbin /usr/sbin $path /usr/lib64/openmpi/bin)
+setenv PKG_CONFIG_PATH /usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+
+make -C ~/R/packages/tests-ATLAS veryclean unpack
+source  ~/R/packages/check-ATLAS

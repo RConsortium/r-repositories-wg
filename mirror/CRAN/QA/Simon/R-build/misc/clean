@@ -1,0 +1,23 @@
+#!/bin/sh
+# clean-up script
+
+TARS='pkg-config-0.23.tar.gz '`sed -n -e 's!^http:.*/!!p' -e 's!^ftp:.*/!!p' gtk2.build`
+rm -rf OK-* build-script-*.sh bld
+
+if [ "$1" = '-h' ]; then
+    echo ''
+    echo " Usage: $0 [-a | -s]"
+    echo ''
+    echo ' -s  also remove source directories'
+    echo ' -a  reamove all (incl. tar balls)'
+    echo ''
+    exit 0
+fi
+if [ "$1" = '-a' -o "$1" = '-s' ]; then
+    echo " - clean sources"
+    for i in $TARS; do rm -rf `echo $i|sed -e 's:.tar.gz$::' -e 's:.tar.bz2$::'`; done
+fi
+if [ "$1" = '-a' ]; then
+    echo " - clean all"
+    rm $TARS
+fi

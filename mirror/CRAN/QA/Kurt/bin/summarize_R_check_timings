@@ -1,0 +1,42 @@
+#! /usr/bin/Rscript
+
+args <- commandArgs(trailingOnly = TRUE)
+ind <- args %in% c("-a", "--all")
+all <- any(ind)
+args <- args[!ind]
+dir <- if(length(args)) {
+    args[1L]
+} else {
+    path.expand(file.path("~", "tmp", "CRAN"))
+}
+
+source(path.expand(file.path("~", "lib", "R", "Scripts", "check.R")))
+
+print(get_timings_from_timings_files(file.path(dir, "time_c.out")),
+      row.names = FALSE, right = FALSE)
+
+if(all) {
+    writeLines("")
+    cwd <- getwd()
+    setwd(dir)
+    on.exit(setwd(cwd))
+
+    tfiles <- Sys.glob(file.path("*.Rcheck", "*-Ex.timings"))
+
+    timings <- lapply(tfiles, read.table, header = TRUE)
+    ## Order by CPU time.
+    timings <- lapply(timings,
+                      function(x)
+                      x[order(x$user, decreasing = TRUE), ])
+    ## This looks silly, but we want a common alignment.
+    timings <- split(as.data.frame(lapply(do.call(rbind, timings),
+                                          format)),
+                     rep.int(sub("\\.Rcheck.*", "", tfiles),
+                             sapply(timings, nrow)))
+    invisible(Map(function(x, y) {
+        writeLines(sprintf("Example timings for package '%s':", x))
+        cat(rbind(" ", t(as.matrix(y))),
+            sep = c(" ", " ", " ", " ", "\n"))
+    },
+                  names(timings), timings))
+}

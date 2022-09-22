@@ -1,0 +1,12 @@
+CFLAGS = -g -O3 -Wall -pedantic -mtune=native
+CXXFLAGS = -g -O3 -Wall -pedantic -mtune=native
+CXX11FLAGS = -g -O3 -Wall -pedantic -mtune=native
+CXX14FLAGS = -g -O3 -Wall -pedantic -mtune=native
+CXX17FLAGS = -g -O3 -Wall -pedantic -mtune=native
+CXX20FLAGS = -g -O3 -Wall -pedantic -mtune=native
+FFLAGS = -g -O2 -Wall -mtune=native
+FCFLAGS = -g -O2 -Wall -mtune=native
+
+## Commented out 2019-10-31.
+## ## Fortran OpenMP with gfortran 9 often does not work with clang (8 or 9):
+## SHLIB_OPENMP_FFLAGS=

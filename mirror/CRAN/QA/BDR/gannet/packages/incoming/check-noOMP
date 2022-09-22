@@ -1,0 +1,5 @@
+#! /bin/csh
+setenv DISPLAY :5
+mkdir -p /tmp/Libs
+~/R/R-clang-noOMP/bin/R  CMD INSTALL -l /tmp/Libs $*
+rm -r /tmp/Libs

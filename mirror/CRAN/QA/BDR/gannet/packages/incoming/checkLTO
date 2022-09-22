@@ -1,0 +1,5 @@
+#! /bin/csh
+setenv DISPLAY :5
+mkdir -p /tmp/Libs
+Rdev CMD INSTALL -l /tmp/Libs --use-LTO $*
+rm -r /tmp/Libs

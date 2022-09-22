@@ -1,0 +1,4 @@
+set path = (/usr/local/gcc6/bin $path)
+setenv LD_LIBRARY_PATH /usr/local/gcc6/lib64
+setenv ASAN_OPTIONS "detect_leaks=0:detect_odr_violation=0"
+#setenv ASAN_OPTIONS "detect_leaks=0"

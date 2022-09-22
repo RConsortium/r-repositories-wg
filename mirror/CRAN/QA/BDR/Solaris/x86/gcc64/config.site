@@ -1,0 +1,16 @@
+CC="/opt/csw/bin/gcc -m64"
+CFLAGS=-O2
+CPPFLAGS="-I/opt/csw/include -I/usr/local/include"
+F77="/opt/csw/bin/gfortran -m64"
+FFLAGS=-O2
+CXX="/opt/csw/bin/g++ -m64"
+CXXFLAGS=-O2
+FC=$F77
+FCFLAGS=$FFLAGS
+LDFLAGS="-L/usr/local/lib/amd64 -L/opt/csw/lib/amd64"
+#R_LD_LIBRARY_PATH="/opt/csw/lib/amd64:/opt/csw/lib"
+JAVA_HOME=/opt/jdk1.7.0_65/jre
+JAVA_CPPFLAGS="-I${JAVA_HOME}/../include -I${JAVA_HOME}/../include/solaris"
+JAVA_LIBS='-L${JAVA_HOME}/lib/amd64/server -R${JAVA_HOME}/lib/amd64/server -ljvm'
+JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/amd64/server
+

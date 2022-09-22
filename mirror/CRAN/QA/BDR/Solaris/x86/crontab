@@ -1,0 +1,3 @@
+5 4,6,10,16,22 * * * /home/ripley/R/packages/check-swift > /home/ripley/R/packages/check-swift.log 2>&1
+5 1 * * * /home/ripley/R/packages/tl-update > /home/ripley/R/packages/tl-update.log  2>&1
+48 7 * * * /home/ripley/R/packages/record.R > /home/ripley/R/packages/record.log 2>&1

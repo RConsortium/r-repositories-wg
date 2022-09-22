@@ -1,0 +1,25 @@
+5 2-23/6,6 * * 0-6  /data/gannet/ripley/R/packages/check-devel > /data/gannet/ripley/R/packages/check-devel.log 2>&1
+
+#10 0 * * 5 /data/gannet/ripley/R/packages/Reinst-devel > /data/gannet/ripley/R/packages/Reinst-devel.log 2>&1
+
+#10 23 * * 6 /data/gannet/ripley/R/packages/full-devel > /data/gannet/ripley/R/packages/check-devel.log 2>&1
+
+5 4-23/6,7 * * 0-6 /data/gannet/ripley/R/packages/check-clang > /data/gannet/ripley/R/packages/check-clang.log 2>&1
+
+#10 0 * * 4 /data/gannet/ripley/R/packages/Reinst-clang > /data/gannet/ripley/R/packages/Reinst-clang.log 2>&1
+
+5 0 * * 6 /data/gannet/ripley/R/packages/Full-run > /data/gannet/ripley/R/packages/Full-run.log 2>&1
+
+5 3 * * 1-5 /data/gannet/ripley/R/packages/check-extra > /data/gannet/ripley/R/packages/check-extra.log 2>&1
+
+5 5 * * 1-5 /data/gannet/ripley/R/packages/check-patched > /data/gannet/ripley/R/packages/check-patched.log 2>&1
+
+3 * * * * /data/gannet/ripley/R/packages/update > /data/gannet/ripley/R/packages/updates.log 2>&1
+
+5 1 * * * /data/gannet/ripley/R/packages/tl-update > /data/gannet/ripley/R/packages/tl-update.log  2>&1
+
+5 0-23/3 * * * /data/gannet/ripley/R/packages/donttest.R > /data/gannet/ripley/R/packages/donttest.log  2>&1
+
+5 0-23/3 * * * /data/gannet/ripley/R/packages/M1mac.R > /data/gannet/ripley/R/packages/M1mac.log  2>&1
+
+48 7 * * * /data/gannet/ripley/R/packages/Rlog_diffs2

@@ -1,0 +1,44 @@
+#!/bin/csh
+setenv OMP_THREAD_LIMIT 2
+
+setenv DISPLAY :5
+limit cputime 30m
+limit stacksize 50m
+#limit memoryuse 2000m
+setenv LC_CTYPE en_GB.UTF-8
+setenv _R_CHECK_TIMINGS_ 10
+setenv _R_CHECK_INSTALL_DEPENDS_ TRUE
+setenv _R_CHECK_SUGGESTS_ONLY_ TRUE
+setenv _R_CHECK_NO_RECOMMENDED_ TRUE
+setenv _R_CHECK_DEPRECATED_DEFUNCT_ true
+setenv _R_CHECK_REPLACING_IMPORTS_ true
+setenv _R_CHECK_S3_METHODS_NOT_REGISTERED_ true
+setenv _R_CHECK_OVERWRITE_REGISTERED_S3_METHODS_ true
+setenv _R_CHECK_COMPILATION_FLAGS_ true
+setenv _R_CHECK_PACKAGES_USED_IN_TESTS_USE_SUBDIRS_ true
+setenv _R_CHECK_THINGS_IN_CHECK_DIR_ true
+setenv _R_CHECK_THINGS_IN_TEMP_DIR_ true
+
+#setenv _R_CHECK_DOC_SIZES_ false
+setenv _R_CHECK_VIGNETTES_NLINES_ 10000
+setenv _R_CHECK_VIGNETTES_SKIP_RUN_MAYBE_ true
+setenv _R_CHECK_TESTS_NLINES_ 0
+
+setenv _R_CHECK_ELAPSED_TIMEOUT_ 1h
+setenv _R_CHECK_INSTALL_ELAPSED_TIMEOUT_ 4h
+setenv _R_CHECK_TESTS_ELAPSED_TIMEOUT_ 3h
+setenv _R_CHECK_BUILD_VIGNETTES_ELAPSED_TIMEOUT_ 3h
+
+setenv _R_CHECK_XREFS_USE_ALIASES_FROM_CRAN_ TRUE
+
+setenv WNHOME /usr/local/wordnet-3.0
+setenv HDF5_USE_FILE_LOCKING FALSE
+setenv R_DEFAULT_INTERNET_TIMEOUT 300
+
+## eDMA imager mashr rEDM work with CC with runtime errors
+
+nohup env MAKE=gmake gmake -j20 -k RDEV=Rgcc BayesPostEst.out BayesSUR.out HCT.out PosteriorBootstrap.out Rcpp.out RcppAnnoy.out RcppArmadillo.out RcppClassic.out RcppEigen.out RcppGSL.out RcppNumerical.out RcppXsimd.out RcppThread.out StanHeaders.out bayesplot.out bridgesampling.out clustermq.out compboost.out cpp11.out dMod.out dqrng.out drake.out gppm.out imager.out lazyarray.out lolog.out mashr.out psqn.out rEDM.out rTRNG.out r2sundials.out rstan.out rstanarm.out >&! check_log
+
+## used to include Kmisc.out RcppHoney.out eDMA.out rstansim.out
+
+nohup gmake -j20 -k check >>&! check_log

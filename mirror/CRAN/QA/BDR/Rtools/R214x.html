@@ -1,0 +1,117 @@
+<html lang="en"><head>
+<title>Building R 2.14.1 for Windows</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name=description content="Building R 2.14.1 for Windows">
+<link rel=stylesheet href="Rtech.css">
+</head>
+
+<body>
+
+<p> The current version of the packaged installer for the tools is at
+<a href="http://cran.r-project.org/bin/windows/Rtools/"><tt>http://cran.r-project.org/bin/windows/Rtools/</tt></a>.  This area only contains unbundled components and additional pre-compiled software.
+
+<p>
+This page only covers R 2.12.0 to 2.14.1: see
+<a href="R215x.html">this page<a> for R-patched (2.14.2-to-be) and R-devel (2.15.0-to-be).
+<br>
+64-bit builds of R 2.11.x were done with a different toolchain and are no longer supported.
+
+<p>
+The 32-bit toolchain for is
+<a href="mingw32-toolchain.zip"><tt>mingw32-toolchain.zip</tt></a>.
+[Updated 2010-09-29]
+
+<p>
+A toolchain for 64-bit builds which is based on gcc 4.5.2 and does not
+use leading underscores is available as
+<a href="Win64No_toolchain.zip"><tt>Win64No_toolchain.zip</tt></a>.
+This is the recommended 64-bit toolchain for R 2.12.0 to 2.14.x.
+[Updated 2010-09-29]
+
+<p>
+The <tt>Rtools.exe</tt> installer contains
+<a href="R_Tcl_8-5-8.zip"><tt>R_Tcl_8-5-8.zip</tt></a>.
+
+The procedures and scripts used to compile the <tt>Tcl</tt> directory
+and in particular to produce the help file are at
+<a href="https://svn.r-project.org/R-packages/trunk/R-Tcl-win/"><tt>https://svn.r-project.org/R-packages/trunk/R-Tcl-win/</tt></a>.
+The sources used were
+<a href="sources/tcl8.5.8-src.tar.gz"><tt>tcl8.5.8-src.tar.gz</tt></a>,
+<a href="sources/tk8.5.8-src.tar.gz"><tt>tk8.5.8-src.tar.gz</tt></a>, 
+<a href="sources/BWidget-1.8.0.tar.bz2"><tt>BWidget-1.8.0.tar.bz2</tt></a> and
+<a href="sources/Tktable2.9.tar.gz"><tt>Tktable2.9.tar.gz</tt></a>.
+<br>
+64-bit build of Tcl/Tk:
+<a href="R64a_Tcl_8-5-8.zip"><tt>R64a_Tcl_8-5-8.zip</tt></a>.
+</p>
+
+<p>
+Directory <a href="goodies">goodies</a> contains various libraries
+compiled up with MinGW, and their sources.  In particular
+<a href="goodies/Win32/local.zip"><tt>local.zip</tt></a> (32-bit) and
+<a href="goodies/Win64No_/local64No_.zip"><tt>local64No_.zip</tt></a> (64-bit)
+are zipfiles of a <tt>/usr/local</tt> as used for CRAN builds: they
+currently contains headers and static libraries for
+<tt>fftw3</tt> (3.2.2),
+<tt>gmp</tt> (4.3.2),
+<tt>gsl</tt> (1.15),
+<tt>jpeg</tt> (8c),
+<tt>mpfr</tt> (3.0.0),
+<tt>mpc</tt> (0.9),
+<tt>sprng</tt> (2.0b),
+and
+<tt>tiff</tt> (3.9.1 or 3.9.4).
+File <tt>src/gnuwin32/MkRules.dist</tt> has a macro
+<tt>LOCAL_SOFT</tt> that can be pointed at the location where this was
+unpacked.
+</p>
+
+<p>
+<tt>netcdf-4.0.1.zip</tt> and <tt>udunits-1.12.4.zip</tt> support packages
+<tt>RNetCDF</tt> and <tt>ncdf</tt>.
+</p>
+
+<p>
+For <tt>x64</tt> R >= 2.12.0, use the software in
+<a href="goodies/Win64No_"><tt>goodies/Win64No_</tt></a>.
+<br>
+File <tt>Spatial64No_.zip</tt> contains software needed for use with packages
+<tt>proj4</tt>, <tt>rgdal</tt> and <tt>rgeos</tt>.
+</p>
+
+<h2> Software for 32-bit R 2.12.0 to 2.14.1</h2>
+
+<p>
+Grouping together links from above:
+
+<p>
+The recommended toolchain is
+<a href="mingw32-toolchain.zip"><tt>mingw32-toolchain.zip</tt></a>.
+
+<br>
+The build of Tcl/Tk needed to build R in
+<a href="R_Tcl_8-5-8.zip"><tt>R_Tcl_8-5-8.zip</tt></a>
+
+<br>
+The additional software for making CRAN packages is under
+<a href="goodies/Win32"><tt>goodies/Win32</tt></a>
+
+<h2> Software for 64-bit R 2.12.0 to 2.14.1</h2>
+
+<p>
+Grouping together links from above:
+
+<p>
+The recommended toolchain is
+<a href="Win64No_toolchain.zip"><tt>Win64No_toolchain.zip</tt></a>.
+
+<br>
+The build of Tcl/Tk needed to build R in
+<a href="R64a_Tcl_8-5-8.zip"><tt>R64a_Tcl_8-5-8.zip</tt></a>
+
+<br>
+The additional software for making CRAN packages is under
+<a href="goodies/Win64No_"><tt>goodies/Win64No_</tt></a>
+
+</body></html>
+

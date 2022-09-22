@@ -1,0 +1,104 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+    echo ""
+    echo " Usage: nopathR <r-home>"
+    echo ""
+    exit 0
+fi
+
+R=$1
+
+if [ ! -e $R/lib/libR.dylib ]; then
+    echo "Cannot find $R/lib/libR.dylib"
+    exit 1
+fi
+
+PWD=`pwd`
+cd $R/lib
+
+if otool -L $R/lib/libR.dylib | grep /gcc4.0/ > /dev/null; then
+    echo " - GCC 4.0.3 mode"
+    GCCLIB=/usr/local/gcc4.0/lib
+    GCCLIBS="libgcc_s.1.0.dylib libgfortran.0.dylib libstdc++.6.dylib"
+else
+    echo " - local GCC mode"
+    GCCLIB=/usr/local/lib
+    GCCLIBS="libgcc_s.1.dylib libgfortran.2.dylib"
+fi
+
+echo "Fix libR ..."
+install_name_tool -id $R/lib/libR.dylib libR.dylib
+
+for gcclib in $GCCLIBS; do
+    cd $R/lib
+    echo "Copy $gcclib ..."
+    cp $GCCLIB/$gcclib .
+
+    echo "Fix $gcclib libs ..."
+    chmod a+x lib*
+
+    install_name_tool -id $R/lib/$gcclib $R/lib/$gcclib
+done
+
+# second pass - fix inside references
+for gcclib in $GCCLIBS; do
+    cd $R
+    echo "Fix all dylib/so in $R ..."
+    find . -name \*.dylib -or -name \*.so| xargs -n 1 install_name_tool -change $GCCLIB/$gcclib $R/lib/$gcclib
+    find . -name \*.dylib -or -name \*.so| xargs -n 1 install_name_tool -change $gcclib $R/lib/$gcclib
+    # fix bin/exec*R
+    for rbin in `ls bin/exec/*/* bin/exec/R bin/Rscript 2>/dev/null`; do
+	install_name_tool -change $GCCLIB/$gcclib $R/lib/$gcclib $rbin
+    done
+done
+
+cd $R/lib
+otool -L libR.dylib|grep readline
+if [ $? == 0 ]; then
+    echo "Copying and fixing readline ..."
+    rllib=`ls /usr/local/lib/libreadline.?.?.dylib|sort|tail -n 1`
+    rllib=`basename ${rllib}`
+    cp /usr/local/lib/${rllib} .
+    chmod a+x lib*
+    chgrp admin lib*
+    chmod g+w lib*
+    install_name_tool -id $R/lib/${rllib} ${rllib}
+    cd $R
+    find . -name \*.dylib -o -name \*.so| xargs -n 1 install_name_tool -change ${rllib} $R/lib/${rllib}
+    find . -name \*.dylib -o -name \*.so| xargs -n 1 install_name_tool -change /usr/local/lib/${rllib} $R/lib/${rllib}
+fi
+
+# last pass -- actually it coulde replace the above two
+# it takes care of any linked libraries in /usr/local that are supplied
+# (as for packages)
+
+rlib=$R/lib
+cd $R/
+# now go through all so/dylibs we find
+libs=`find . -name \*.so -or -name \*.dylib -or -name \*.jnilib`
+for lib in $libs; do
+    # in each so/dylib/jnilib, find dependent libraries beginning with /usr/local
+    lds=`otool -L $lib| sed -n 's|.\(/usr/local.\{0,\}\) (com.\{0,\}|\1|p'`
+    for ld in $lds; do
+        # find out what the baes name of the linked dylib is
+	ldname=`basename $ld`
+	if [ -e "$rlib/$ldname" ]; then
+            # if a copy exists in the same location as libR.dylib, fix it
+	    echo "LDI: $ld -> $rlib/$ldname"
+	    install_name_tool -change "$ld" "$rlib/$ldname" $lib
+	else
+            # otherwise warn - that is an unresolved dependency
+	    echo "LDW: WARNING: $ld not found in $rlib/$ldname"
+	fi
+    done
+done
+
+# fix permission issue with config.h
+if [ -e $R/../PrivateHeaders ]; then
+    chmod a+r $R/../PrivateHeaders/*
+fi
+
+echo "Done"
+
+cd $PWD

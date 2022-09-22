@@ -1,0 +1,11 @@
+#!/bin/csh
+source ~/R/packages/common.csh
+setenv _R_CHECK_PKG_SIZES_ false
+setenv _R_CHECK_LIMIT_CORES_ false
+
+setenv _R_CHECK_ORPHANED_ true
+
+foreach f ($*)
+  ~/R/R-devel/bin/Rscript checkDeps.R $f
+  ./pkgdiff $f
+end

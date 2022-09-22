@@ -1,0 +1,8 @@
+#! /usr/bin/env Rscript
+foo <- dir('/data/ftp/pub/bdr/Rblas/MKL', patt="[.]out$")
+foo <- sub("[.]out$", "", foo)
+ref <- "../tests-devel"
+this <- "MKL"
+source('../pkgdiff.R')
+junk <- pkgdiff(c(foo, readLines('../stoplist2'),
+                  "datasailr", "spacetime"))

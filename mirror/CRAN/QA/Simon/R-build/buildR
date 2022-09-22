@@ -1,0 +1,179 @@
+#!/bin/sh
+
+if [ -z "$1" -o x$1 == x-h -o x$1 == x--help ]; then
+    echo ""
+    echo " buildR <directory> [<arch> <target>]"
+    echo ""
+    echo " default: <directory> native <oscode>-<arch>"
+    echo " example: R-devel i386 tiger-i386"
+    echo ""
+    echo " sources are expected in <directory>"
+    echo " build goes to <target>/<directory>, no install is performed."
+    echo ""
+    echo " special value for arch: 'native' doesn't use r_arch at all."
+    echo ""
+    echo " Optional env. settings:"
+    echo "   BASE    - abs. path to build system base"
+    echo ""
+    exit 0;
+fi
+
+: ${BASE=/Builds/R-builds/nightly}
+
+RBUILDS=$BASE
+
+. $BASE/common
+
+RD="$1"
+TARCH="$2"
+TNAME="$3"
+
+if [ -z "$TARCH" ]; then
+    TARCH=native
+fi
+
+if [ -z "$TNAME" ]; then
+    TNAME="$oscode-$ARCH"
+fi
+
+TNAMEWOA=`echo $TNAME|sed 's:-.*::'`
+
+if [ -e /usr/texbin ]; then
+    PATH=$PATH:/usr/texbin
+fi
+if [ -e "/usr/local/teTeX/bin/${texarch}-apple-darwin-current" ]; then
+    PATH=$PATH:/usr/local/teTeX/bin/${texarch}-apple-darwin-current
+fi
+
+if [ -z "$PKGCODE" ]; then
+    if [ "$oscode" != "tiger" ]; then
+	PKGTYPE="mac.binary.$oscode"
+    else
+	PKGTYPE="mac.binary"
+    fi
+fi
+
+PATH=/usr/local/bin:$PATH
+
+CONSH=$BASE/consh
+
+host=`hostname -s`
+# old gcc 4.0 should now NEVER be used!
+#if [ "$host" == "imac86" -a -e /usr/local/gcc4.0 ]; then
+#  PATH=/usr/local/gcc4.0/bin:$PATH
+#fi
+
+ncpu=`/usr/sbin/sysctl hw.ncpu|sed -n 's/hw.ncpu: //p'`
+if [ -n "${ncpu}" ]; then
+    : ${MAKEF=-j$ncpu}
+fi
+
+if [ -n "${XTRAMAKEF}" ]; then
+    MAKEF="${MAKEF} ${XTRAMAKEF}"
+fi
+
+export PATH
+mkdir -p $BASE/$TNAME
+
+cd $BASE
+TS=`date +%s:%Y%m%d:%H%M%S`
+if [ $TARCH = native ]; then
+    RARCH=''
+else
+    RARCH="r_arch=$TARCH"
+fi
+
+echo "Building $RD for $TNAME (arch $TARCH, pkgType=\"${PKGTYPE}\")"
+
+## check available disk space before proceeding - we require at least 1GB to make sure
+DSKF=`df -g "$BASE/$TNAME" | awk '{print $4}' | tail -n 1`
+if [ "$DSFK" = 0 ]; then
+    echo "***FATAL ERROR: out of disk space!"
+    echo "FATAL ERROR: out of disk space" > $BASE/$TNAME/$RD.FAILED
+    exit 1
+fi
+
+rm -f $BASE/$TNAME/$RD-$TNAME-bld.tar.gz
+
+echo "$TS:$RD:configure" >> $BASE/$TNAME/build.log
+rm -rf $BASE/$TNAME/$RD
+mkdir -p $BASE/$TNAME/$RD
+rm -f $BASE/$TNAME/$RD.FAILED $BASE/$TNAME/$RD.SUCCESS
+cd $BASE/$TNAME/$RD
+use_build=no
+HOST=`../../$RD/tools/config.guess`
+if [ -n "${FORCE_OS_VERSION}" ]; then
+    HOST=`echo ${HOST}|sed "s/-darwin.*/-darwin${FORCE_OS_VERSION}/"`
+    use_build=yes
+fi
+if [ $TARCH = ppc -a $ARCH = i386 ]; then
+    HOST=`echo ${HOST}|sed s/^i386/powerpc/`
+    use_build=yes
+fi
+if [ $TARCH = x86_64 -a $ARCH = i386 ]; then
+    HOST=`echo ${HOST}|sed s/^i386/x86_64/`
+    use_build=yes
+fi
+if [ ${use_build} = yes ]; then
+    echo "  (forcing build name $HOST)"
+    RARCH="--build=$HOST $RARCH"
+fi
+CONFF=`cat $BASE/conf.$TNAME 2>/dev/null`
+GCONFF=`cat $BASE/conf.$TNAMEWOA 2>/dev/null`
+echo "Using configure $RARCH $GCONFF $CONFF"
+TS=`date +%s:%Y%m%d:%H%M%S`
+echo "$TS:$RD:confcall $RARCH $GCONFF $CONFF" >> $BASE/$TNAME/build.log
+${CONSH} "../../$RD/configure $RARCH $GCONFF $CONFF" $BASE/$TNAME/$RD.conf
+CRES=$?
+TS=`date +%s:%Y%m%d:%H%M%S`
+echo "$TS:$RD:configure:$CRES" >> $BASE/$TNAME/build.log
+if [ $CRES = 0 ]; then
+    cd $BASE/$TNAME/$RD
+    echo "#define PLATFORM_PKGTYPE \"${PKGTYPE}\"" >> src/include/config.h
+    echo "make $MAKEF"
+    echo "$TS:$RD:make" >> $BASE/$TNAME/build.log
+    ${CONSH} "make $MAKEF" $BASE/$TNAME/$RD.build
+    MRES=$?
+    TS=`date +%s:%Y%m%d:%H%M%S`
+    echo "$TS:$RD:make:$MRES" >> $BASE/$TNAME/build.log
+
+    if [ $MRES = 0 ]; then
+	cd $BASE/$TNAME
+	
+        # create a build tar-ball, e.g. for check on another machine
+	echo "$BASE/$TNAME" > $RD/build-base
+	tar fcz $RD-$TNAME-bld.tar.gz $RD
+	cd $BASE/$TNAME/$RD
+	TS=`date +%s:%Y%m%d:%H%M%S`
+#	if [ $TARCH = $ARCH -o $TARCH = native ]; then
+	    echo "make check"
+	    echo "$TS:$RD:check" >> $BASE/$TNAME/build.log
+	    ${CONSH} "make check" $BASE/$TNAME/$RD.check
+	    CR=$?
+	    TS=`date +%s:%Y%m%d:%H%M%S`
+	    echo "$TS:$RD:check:$CR" >> $BASE/$TNAME/build.log
+#	else
+#	    echo "$TS:$RD:nocheck (cross-build)" >> $BASE/$TNAME/build.log
+#	    CR=0
+#	fi
+	if [ $CR = 0 ]; then
+	    echo "SUCCESS"
+	    touch $BASE/$TNAME/$RD.SUCCESS
+	else
+	    echo "make check FAILED" > $BASE/$TNAME/$RD.FAILED
+	    ## add tails of failed test output to the log file (if any)
+	    FT=`ls tests/*/*.fail tests/*.fail 2>/dev/null`
+	    if [ -n "$FT" ]; then
+		for ft in $FT; do
+		    echo '#@2@#====== FAILED TEST: ' "$ft" '@#2#@' >> $BASE/$TNAME/$RD.check
+		    tail -n 20 $ft >> $BASE/$TNAME/$RD.check
+		done
+	    fi
+	fi
+    else
+	echo "make  FAILED" > $BASE/$TNAME/$RD.FAILED
+    fi
+else
+    echo "Configure FAILED"
+    echo "configure FAILED" > $BASE/$TNAME/$RD.FAILED
+fi

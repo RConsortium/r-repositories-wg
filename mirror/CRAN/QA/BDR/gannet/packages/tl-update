@@ -1,0 +1,5 @@
+#! /bin/csh
+set path=(/usr/local/texbin /usr/local/bin /usr/bin)
+
+#/usr/local/texbin/tlmgr update --self --all --exclude babel
+/usr/local/texbin/tlmgr update --self --all

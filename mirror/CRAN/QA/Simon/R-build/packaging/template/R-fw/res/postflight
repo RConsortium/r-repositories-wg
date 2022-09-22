@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# postflight script for R 
+
+# create convenience links to R and Rscript
+cd /usr/bin
+rm -f R Rscript
+ln -s /Library/Frameworks/R.framework/Resources/bin/R .
+ln -s /Library/Frameworks/R.framework/Resources/bin/Rscript .
+
+# update font cache (if this R includes fontconfig)
+if [ -e /Library/Frameworks/R.framework/Resources/bin/fc-cache ]; then
+    /Library/Frameworks/R.framework/Resources/bin/fc-cache
+fi
+
+# make sure the framework is admin-writable
+chown -Rh root:admin /Library/Frameworks/R.framework
+chmod -R g+w /Library/Frameworks/R.framework
+
+# remove left-overs from previous versions (beta/RC/...)
+if [ -e /Library/Frameworks/R.framework/Resources/etc/Makeconf ]; then
+  rm -f /Library/Frameworks/R.framework/Resources/etc/Makeconf
+fi
+
+if [ -e /Developer/SDKs/MacOSX10.4u.sdk/usr ]; then
+    if [ ! -e /Developer/SDKs/MacOSX10.4u.sdk/usr/local ]; then
+	ln -s /usr/local /Developer/SDKs/MacOSX10.4u.sdk/usr/local
+    fi
+fi

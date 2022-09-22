@@ -1,0 +1,9 @@
+#! /usr/bin/env Rscript
+foo <- dir('/data/ftp/pub/bdr/gcc12', patt="[.]out$")
+foo <- sub("[.]out$", "", foo)
+foo2 <- dir('/data/ftp/pub/bdr/gcc12', patt="[.]log$")
+foo2 <- sub("[.]log$", "", foo2)
+ref <- "../tests-devel"
+this <- "gcc12"
+source('../pkgdiff.R')
+junk <- pkgdiff(c(foo, foo2, readLines('../stoplist2')))

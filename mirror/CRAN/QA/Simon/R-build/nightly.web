@@ -1,0 +1,17 @@
+#!/bin/sh
+
+BASE=/Builds/R-builds/nightly
+export BASE
+
+: ${server=r}
+# convert old directory structure into new one
+$BASE/old2new
+# generate pages
+$BASE/mkweb
+
+#GUIDMG=`sort $BASE/GUIs|uniq|sed 's/.*/&.dmg/'`
+#ssh $server '/usr/bin/rm -f wwwfiles/R??-branch*.dmg wwwfiles/R-*.dmg'
+scp $BASE/web/index.html $BASE/deploy/*/*/universal/R*-universal.tar.gz $BASE/web/log-* $BASE/deploy/*/*/universal/R*.dmg $server:wwwfiles/
+ssh $server 'wwwfiles/rmold'
+
+# scp web/index.html r:wwwfiles/

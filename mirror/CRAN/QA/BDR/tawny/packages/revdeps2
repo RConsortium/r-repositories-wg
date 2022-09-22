@@ -1,0 +1,47 @@
+#! /usr/local/bin/Rscript
+
+args <- commandArgs(TRUE)
+.libPaths(args[1])
+if(!file.exists(args[2]))
+    stop("no previous snapshot")
+nmax <- 250L
+old <- readRDS(args[2])
+old <- as.data.frame(old, stringsAsFactors = FALSE)
+new <- installed.packages(args[1])[, c("Package", "Version")]
+new <- as.data.frame(new, stringsAsFactors = FALSE)
+both <- merge(old, new, by = "Package")
+updated <- with(both, Package[Version.x != Version.y])
+## new packages might be in Suggests
+added <- setdiff(row.names(new), row.names(old))
+## and removed packages might have (a few) dependents
+removed <- setdiff(row.names(old), row.names(new))
+if(!length(c(updated, added, removed))) {
+    message("no changed packages")
+    q("no")
+}
+cur <- gsub("[.]out", "", dir(dirname(args[2]), patt = "[.]out"))
+foo <- character()
+for (u in c(updated, added, removed)) {
+    foo1 <- tools::dependsOnPkgs(u, , TRUE)
+    foo2 <- c(foo1, tools::dependsOnPkgs(c(u, foo1), 'all', FALSE))
+    foo2 <- intersect(foo2, cur)
+    if(length(foo2) <= nmax) foo <- c(foo, foo2)
+    else {
+        foo1 <- tools::dependsOnPkgs(u, 'all', FALSE)
+        foo1 <- intersect(foo1, cur)
+	if(length(foo1) <= nmax) {
+	    foo <- c(foo, foo1)
+            message(sprintf("re-checking %d/%d revdeps of %s",
+                            length(foo1), length(foo2), sQuote(u)))
+	} else
+            message(sprintf("not re-checking %d revdeps of %s",
+                            length(foo2), sQuote(u)))
+    }
+}
+foo <- sort(unique(foo))
+
+if(length(foo)) {
+    message ("re-checking ", paste(sQuote(foo), collapse =" "))
+    unlink(file.path(dirname(args[2]), paste0(foo, ".*")))
+} else
+   message("no re-checking needed")

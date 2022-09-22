@@ -1,0 +1,4 @@
+#! /bin/csh
+set path=(. /home/ripley/bin /usr/local/bin /usr/local/texbin /usr/bin)
+
+tlmgr update --self --all

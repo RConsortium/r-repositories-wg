@@ -1,0 +1,5 @@
+#! /usr/local/bin/Rscript
+
+args <- commandArgs(TRUE)
+foo <- installed.packages(args[1])[, c("Package", "Version")]
+saveRDS(foo, args[2])

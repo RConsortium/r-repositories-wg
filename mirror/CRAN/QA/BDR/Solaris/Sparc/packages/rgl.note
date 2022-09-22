@@ -1,0 +1,5 @@
+An update on the Sparc Solaris check machine broke rgl, and I needed the fix in
+http://stackoverflow.com/questions/2550269/undefined-symbol-sunoglcurprimtableptr-in-solaris-x86  (ironically, not on the Opteron machine).
+
+I'm not sure this is something you can easily incorporate: I needed to add 
+-DSUN_OGL_NO_VERTEX_MACROS to PKG_CPPFLAGS, so this is more FYI.

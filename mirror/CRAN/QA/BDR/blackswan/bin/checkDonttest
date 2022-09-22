@@ -1,0 +1,68 @@
+#!/bin/csh
+setenv DISPLAY :5
+setenv OMP_THREAD_LIMIT 2
+
+limit cputime 30m
+limit stacksize 20M
+
+setenv _R_CHECK_FORCE_SUGGESTS_ false
+setenv LC_CTYPE en_GB.UTF-8
+#setenv MYSQL_USER ripley
+#setenv POSTGRES_USER ripley
+#setenv POSTGRES_HOST localhost
+#setenv POSTGRES_DATABASE ripley
+setenv RMPI_INCLUDE /usr/include/openmpi-x86_64
+setenv RMPI_LIB_PATH /usr/lib64/openmpi/lib
+setenv RMPI_TYPE OPENMPI
+setenv R_BROWSER false
+setenv R_PDFVIEWER false
+#setenv _R_CHECK_INSTALL_DEPENDS_ true
+#setenv _R_CHECK_SUGGESTS_ONLY_ true
+setenv _R_CHECK_NO_RECOMMENDED_ true
+setenv _R_CHECK_DOC_SIZES2_ true
+#setenv R_C_BOUNDS_CHECK yes
+setenv _R_CHECK_DEPRECATED_DEFUNCT_ true
+setenv _R_CHECK_CODE_ASSIGN_TO_GLOBALENV_ true
+#setenv _R_CHECK_CODE_ATTACH_ true
+setenv _R_CHECK_CODE_DATA_INTO_GLOBALENV_ true
+setenv _R_CHECK_RD_LINE_WIDTHS_ true
+setenv _R_CHECK_FF_CALLS_ registration
+setenv _R_CHECK_COMPILATION_FLAGS_ true
+setenv _R_CHECK_SCREEN_DEVICE_ warn
+setenv _R_CHECK_S3_METHODS_NOT_REGISTERED_ true
+setenv _R_CHECK_VIGNETTES_SKIP_RUN_MAYBE_ true
+setenv _R_CHECK_VIGNETTES_NLINES_ 10000
+setenv _R_CHECK_TESTS_NLINES_ 0
+setenv _R_CHECK_PACKAGES_USED_IN_TESTS_USE_SUBDIRS_ true
+setenv _R_CHECK_SHLIB_OPENMP_FLAGS_ true
+setenv _R_CHECK_COMPILATION_FLAGS_KNOWN_ "-Wno-deprecated-declarations -Wno-ignored-attributes -Wno-parentheses -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2"
+
+setenv _R_CHECK_ELAPSED_TIMEOUT_ 45m
+setenv _R_CHECK_INSTALL_ELAPSED_TIMEOUT_ 0
+#setenv _R_CHECK_BUILD_VIGNETES_ELAPSED_TIMEOUT_ 45m
+
+setenv _R_CHECK_LENGTH_1_CONDITION_ package:_R_CHECK_PACKAGE_NAME_,verbose
+setenv _R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_ true
+setenv _R_CHECK_THINGS_IN_CHECK_DIR_ true
+setenv _R_CHECK_THINGS_IN_TEMP_DIR_ true
+setenv _R_CHECK_THINGS_IN_TEMP_DIR_EXCLUDE_ "^ompi"
+setenv _R_CHECK_DONTTEST_EXAMPLES_ true
+setenv _R_CHECK_BOGUS_RETURN_ true
+setenv _R_CHECK_MATRIX_DATA_ TRUE
+setenv _R_CHECK_THINGS_IN_OTHER_DIRS_ true
+setenv _R_CHECK_THINGS_IN_OTHER_DIRS_EXCLUDE_ '@~/exclude'
+set path = (/data/blackswan/ripley/extras/bin $path)
+
+setenv WNHOME /usr/share/wordnet-3.0
+
+setenv _R_CHECK_LIMIT_CORES_ true
+setenv MC_CORES 2
+setenv _R_CHECK_PKG_SIZES_ false
+
+#setenv R_ENABLE_JIT 0
+#setenv R_CHECK_CONSTANTS 5
+#setenv R_JIT_STRATEGY 3
+
+foreach f ($*)
+Rdev CMD check --extra-arch --check-subdirs=yes-maybe $f
+end

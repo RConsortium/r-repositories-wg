@@ -1,0 +1,9 @@
+CC="clang -arch x86_64"
+OBJC=$CC
+CXX="clang++ -arch x86_64"
+FC=/usr/local/gfortran/bin/gfortran
+FFLAGS="-g -O2 -Wall -pedantic -mtune=native -mmacosx-version-min=10.13"
+CFLAGS="-g -O2 -Wall -pedantic -Wconversion -Wno-sign-conversion -mmacosx-version-min=10.13"
+CXXFLAGS="-g -O2 -Wall -pedantic -mmacosx-version-min=10.13"
+R_LD_LIBRARY_PATH=/usr/local/lib
+

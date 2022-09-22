@@ -1,0 +1,11 @@
+CC="/opt/csw/bin/gcc"
+CPPFLAGS="-I/usr/local/include -I/opt/csw/include"
+F77="/opt/csw/bin/gfortran"
+CXX="/opt/csw/bin/g++"
+FC=$F77
+LDFLAGS="-L/usr/local/lib -L/opt/csw/lib"
+CFLAGS="-O2 -mcpu=niagara2"
+CXXFLAGS=$CFLAGS
+FFLAGS="-O2 -mcpu=niagara2"
+FCFLAGS=$FFLAGS
+R_LD_LIBRARY_PATH="/usr/local/lib:/opt/developerstudio12.5/lib:/opt/csw/lib:/usr/openwin/lib"

@@ -1,0 +1,23 @@
+{
+   Suppression for wcsrtombs
+   Memcheck:Cond
+   fun:__wcsnlen_sse4_1
+   fun:wcsrtombs
+   fun:wcstombs
+}
+
+{
+   Suppression for do_makename
+   Memcheck:Addr16
+   fun:__wcsnlen_sse4_1
+   fun:wcsrtombs
+   fun:wcstombs
+}
+
+{
+   Suppression for libxml2
+   Memcheck:Cond
+   obj:/usr/lib64/libxml2.so.2.9.9
+   fun:xmlParseCharEncoding
+}
+

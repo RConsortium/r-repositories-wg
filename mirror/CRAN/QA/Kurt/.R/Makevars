@@ -1,0 +1,8 @@
+CFLAGS = -g -O2 -Wall -pedantic $(LTO)
+CXXFLAGS = -g -O2 -Wall -pedantic $(LTO)
+CXX11FLAGS = -g -O2 -Wall -pedantic $(LTO)
+CXX14FLAGS = -g -O2 -Wall -pedantic $(LTO)
+CXX17FLAGS = -g -O2 -Wall -pedantic $(LTO)
+CXX20FLAGS = -g -O2 -Wall -pedantic $(LTO)
+FFLAGS = -g -O2 -Wall -mtune=native $(LTO)
+FCFLAGS = -g -O2 -Wall -mtune=native $(LTO)

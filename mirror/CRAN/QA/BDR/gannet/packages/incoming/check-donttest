@@ -1,0 +1,12 @@
+#!/bin/csh
+source ~/R/packages/common.csh
+
+limit cputime 90m
+setenv _R_CHECK_ELAPSED_TIMEOUT_ 45m
+setenv _R_CHECK_DEPENDS_ONLY_DATA_ true
+
+setenv R_LIBS ~/R/test-dev
+
+foreach f ($*)
+~/R/R-devel/bin/R CMD check --as-cran --run-donttest $f
+end

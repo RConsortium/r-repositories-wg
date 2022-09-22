@@ -1,0 +1,27 @@
+#!/bin/sh
+
+: ${BASE=/Builds/R-builds/nightly}
+: ${RDIRS=`cat $BASE/builds $BASE/builds.aux`}
+
+OSCODES='tiger leopard'
+
+WD=`pwd`
+cd ${BASE}
+
+for OS in ${OSCODES}; do
+    for rd in ${RDIRS}; do
+	rm -f `ls -d ${rd}-*.dmg 2>/dev/null|sort -r|sed -n '2,99p'`
+	rm -f `ls -d deploy/${OS}/${rd}/universal/${rd}-*.dmg 2>/dev/null|sort -r|sed -n '2,99p'`
+	rm -f `ls -d deploy/${OS}/${rd}/universal/${rd}-*.tar.gz 2>/dev/null|sort -r|sed -n '2,99p'`
+	for bst in Deployment Deployment64 Leopard Leopard64; do
+	    rm -f `ls -d R-GUI-*-${ver}-${bst}.tar.gz 2>/dev/null|sort -r|sed -n '2,99p'`
+	    rm -f `ls -d R-GUI-*-${ver}-${bst}.dmg 2>/dev/null|sort -r|sed -n '2,99p'`
+	    rm -f `ls -d R-GUI-*-${ver}-${OS}-${bst}.tar.gz 2>/dev/null|sort -r|sed -n '2,99p'`
+	    rm -f `ls -d R-GUI-*-${ver}-${OS}-${bst}.dmg 2>/dev/null|sort -r|sed -n '2,99p'`
+	    rm -f `ls -d deploy/${OS}/${rd}/universal/R-GUI-*-${bst}.tar.gz 2>/dev/null|sort -r|sed -n '2,99p'`
+	    rm -f `ls -d deploy/${OS}/${rd}/universal/R-GUI-*-${bst}.dmg 2>/dev/null|sort -r|sed -n '2,99p'`
+	done
+    done
+done
+
+cd ${WD}

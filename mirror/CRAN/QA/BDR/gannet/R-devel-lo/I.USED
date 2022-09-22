@@ -1,0 +1,3 @@
+~/R/svn/R-devel/configure -C \
+  --enable-lto=R \
+  --enable-R-shlib --enable-memory-profiling

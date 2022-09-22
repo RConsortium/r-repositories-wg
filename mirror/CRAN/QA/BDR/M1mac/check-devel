@@ -1,0 +1,17 @@
+#! /bin/csh
+~/R/packages/InUse.R ~/R/packages/tests-devel || exit 1
+cd ~/R
+./update
+cd ~/R/R-devel
+make -j10
+./bin/Rscript -e 'update.packages(.Library, ask = F)'
+cd R/packages
+~/R/packages/revdeps1 ~/R/test-4.1 ~/R/packages/tests-devel/revdeps.rds
+~/R/R-devel/bin/Rscript unavailable.R tests-devel
+env DISPLAY=:5 NOAWT=1 RMPI_TYPE=OPENMPI RGL_USE_NULL=true ~/R/R-devel/bin/Rscript updates.R
+~/R/packages/revdeps2 ~/R/test-4.1 ~/R/packages/tests-devel/revdeps.rds
+cd tests-devel
+make unpack
+./script
+make unpack2; ./script2
+#make package

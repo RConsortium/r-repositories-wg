@@ -1,0 +1,11 @@
+CC="/opt/csw/bin/gcc"
+CPPFLAGS="-I/opt/csw/include -I/usr/local/include"
+F77="/opt/csw/bin/gfortran"
+CXX="/opt/csw/bin/g++"
+FC=$F77
+LDFLAGS="-L/opt/csw/lib -L/usr/local/lib"
+CFLAGS="-O2 -mcpu=niagara2"
+CXXFLAGS=$CFLAGS
+FFLAGS="-O2 -mcpu=niagara2"
+FCFLAGS=$FFLAGS
+R_LD_LIBRARY_PATH="/opt/solarisstudio12.3/lib:/opt/csw/lib:/usr/local/lib:/usr/openwin/lib"

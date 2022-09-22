@@ -1,0 +1,10 @@
+#!/bin/csh
+source /data/gannet/ripley/R/packages/common.csh
+setenv _R_CHECK_PKG_SIZES_ false
+
+## orphaned check may need CRAN_package_db()
+#setenv R_CRAN_WEB https://cran.r-project.org
+setenv _R_CHECK_ORPHANED_ true
+
+nohup make -j30 -k check >&! check_log
+

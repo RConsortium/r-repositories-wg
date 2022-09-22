@@ -1,0 +1,78 @@
+<html lang="en"><head>
+<title>External Software for R packages under Windows</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name=description content="External Software for R packages under Windows">
+<link rel=stylesheet href="Rtech.css">
+</head>
+
+<body>
+
+<h2>External software</h2>
+
+This software is compiled using the recommended toolchain for 
+R 2.14.2 and later. The files are under
+<tt><a href="goodies/multilib">goodies/multilib</a></tt>
+directory.
+
+<p>
+This includes a `local' tree as 
+<a href="goodies/multilib/local320.zip"><tt>local320.zip</tt></a>
+which can be unpacked and pointed to by the <tt>LOCAL_SOFT</tt> macro
+in file <tt>src/gnuwin32/MkRules.local</tt> when building from sources,
+or in the <tt>etc/{i386,x64}/Makeconf</tt> files in a binary distribution.
+This contains headers and static libraries for
+<tt>bzip2</tt> (1.0.6)
+<tt>fftw3</tt> (3.3.4),
+<tt>gmp</tt> (6.0.0),
+<tt>gsl</tt> (1.16),
+<tt>jpeg</tt> (9a),
+<tt>libiconv</tt> (1.14)
+<tt>libpng</tt> (1.6.14)
+<tt>libsndfile</tt> (1.0.25),
+<tt>libxml2</tt> (2.9.2),
+<tt>libz</tt> (1.2.8),
+<tt>mpfr</tt> (3.1.2),
+<tt>pcre</tt> (8.36),
+<tt>sprng</tt> (2.0b),
+<tt>tiff</tt> (4.0.3)
+and
+<tt>xz</tt> (5.0.7).
+
+<p>
+Further software is packaged as
+<a href="goodies/multilib/spatial320.zip"><tt>spatial320.zip</tt></a>
+and can be unpacked in the same place:
+<tt>expat</tt> (2.1.0),
+<tt>gdal</tt> (1.11.0),
+<tt>geos</tt> (3.4.2),
+<tt>netcdf</tt> (4.3.2, for use with <tt>RNetCDF</tt> and <tt>ncdf</tt>, not <tt>ncdf4</tt>),
+<tt>proj</tt> (4.8.0),
+and
+<tt>udunits2</tt> (2.1.24).
+
+<p>
+There are also binary versions of
+<tt>Clp</tt> (1.15.6),
+<tt>libcurl</tt> (7.39.0),
+<tt>glpk</tt> (4.47),
+<tt>QuantLib</tt> (1.4)
+and <tt>SYMPHONY</tt> (5.4.7)
+for use with
+packages <tt>clpAPI</tt>, <tt>pcaL1</tt>, <tt>RCurl</tt>, <tt>glpkAPI</tt>,
+<tt>sdcTable</tt>, <tt>RQuantLib</tt> and <tt>Rsymphony</tt>.
+
+<p>
+This bundling of <tt>libcurl</tt> can also be used with R-devel (R 3.2.0-to-be).
+
+<p>
+<b>NB</b> <tt>gdal</tt> and <tt>QuantLib</tt> have C++ interfaces;
+<tt>Clp</tt> and <tt>geos</tt> are used with C interfaces but contain C++ code.
+The C++ ABI changes a lot with versions of <tt>g++</tt> and even the compiler options: these should be expected to work only with the version of GCC 4.6.x supplied in the recommended toolchain.
+
+<p>
+Sources are under the <tt><a href="goodies/sources">goodies/sources</a></tt> directory.
+
+
+
+</body></html>
+

@@ -1,0 +1,9 @@
+#! /bin/csh
+svn update svn/R-devel svn/R-4-2-branch
+cd packages
+./update
+cd ..
+setenv CRAN_RSYNC ~/R
+svn/R-devel/tools/rsync-recommended
+svn/R-4-2-branch/tools/rsync-recommended
+

@@ -1,0 +1,6 @@
+CFLAGS="-g -O2 -Wall -pedantic -mtune=native"
+FFLAGS="-g -O2 -mtune=native -Wall -pedantic"
+CXXFLAGS="-g -O2 -Wall -pedantic -mtune=native -Wno-ignored-attributes -Wno-deprecated-declarations -Wno-parentheses"
+JAVA_HOME=/usr/lib/jvm/java-1.8.0
+AR=gcc-ar
+RANLIB=gcc-ranlib

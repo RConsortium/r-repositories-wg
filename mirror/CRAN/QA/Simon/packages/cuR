@@ -1,0 +1,24 @@
+#!/bin/sh
+
+: ${BASE=/Builds/packages}
+
+cd "${BASE}"
+
+WHICH=`echo "$1"|sed 's:.tar.gz$::'`
+if [ -z "$WHICH" ]; then
+    WHICH=R-current
+fi
+
+TARBALL="$WHICH.tar.gz"
+if [ ! -e "$TARBALL" ]; then
+    echo "*** ERROR: cannot find the tar-ball $TARBALL"
+    exit 1
+fi
+
+echo "removing previous versions ..."
+# restore current R release for the builds
+rm -rf /Library/Frameworks/R.framework
+echo "restoring $TARBALL ..."
+tar fxz "$TARBALL" -C /
+
+R --version |grep ^R

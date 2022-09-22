@@ -1,0 +1,88 @@
+#!/bin/sh
+#
+# up.repos - collects all build results into one syncable repository,
+#            creates PACKAGES and PACKAGES.gz
+#
+# options: sync=no      - don't sync the result with IX
+#          synconly=yes - only perform the sync 
+#
+
+: ${BASE=/Builds/packages}
+
+: ${server=r}
+
+SKIP_R_CHK=1
+. ${BASE}/common
+
+# R version to sync (x.x is always assumed)
+versions=`sed -e 's/:.*//' $BASE/vers`
+if [ -z "${versions}" ]; then
+    echo "** ERROR: vers is missing. Create one with the list of versions"
+    echo "   to build repositories for (in X.Y format)"
+    exit 1
+fi
+# add CRAN which is in the root of $BASE
+repos="$BASE"
+# default: universal architecture
+arch=`cat $BASE/repos.arch 2>/dev/null`
+if [ -z "$arch" ]; then arch=universal; fi
+# default: tiger-universal is what we look for
+bld=${oscode}-$arch
+
+#---------------------------------------------------------
+
+: ${sync=yes}
+# if we are paranoid, re-run fixtar to be 100% sure
+: ${fix=no}
+
+if [ -n "$synconly" ]; then echo "synconly=yes"; repos=; fi
+
+if [ ! -e "$BASE/repos.root" ]; then
+  echo " * CRAN repos root is missing, creating default one"
+  echo "repos" > $BASE/repos.root
+fi
+
+for rep in $repos; do
+    echo "$rep"
+    if [ -e "$rep/repos.root" ]; then
+	reproot="$BASE/`head -n 1 $rep/repos.root`"
+	mkdir -p $reproot 2> /dev/null
+	if [ -e $reproot ]; then
+	    echo " -> $reproot"
+	    # create universal softlinks if this bin is new and universal
+	    if [ ! -e $reproot/bin/macosx -a $arch = universal ]; then
+		mkdir -p $reproot/bin/macosx/$arch/contrib/$ver
+		ln -s universal $reproot/bin/macosx/powerpc
+		ln -s universal $reproot/bin/macosx/i386
+	    fi
+	    mkdir -p $reproot/bin/macosx/$arch/contrib/$ver
+	    for ver in $versions; do
+		$BASE/rmdup "$rep/$bld/bin/$ver/*.tgz"
+		if [ "$fix" = yes ]; then
+		    ls $rep/$bld/bin/$ver/*.tgz|xargs -n 1 $BASE/fixtar
+		fi
+		rsync -av --delete $rep/$bld/bin/$ver/ $reproot/bin/macosx/$arch/contrib/$ver/
+		$BASE/mk.PACKAGES $reproot/bin/macosx/$arch/contrib/$ver/
+		if [ -e $reproot/bin/macosx/$arch/contrib/$ver/PACKAGES ]; then
+		    gzip -cf9 $reproot/bin/macosx/$arch/contrib/$ver/PACKAGES > $reproot/bin/macosx/$arch/contrib/$ver/PACKAGES.gz
+		fi
+	    done
+	else
+	    echo "WARNING: Non-existing rep.root path ($reproot) for repository $rep" >&2
+	fi
+    else
+	echo "WARNING: Missing rep.root for repository $rep" >&2
+    fi
+done
+
+if [ "$sync" = yes ]; then
+    if [ "$ismaster" = yes ]; then
+	rsync -e ssh -av --delete $BASE/repos/bin/ $server:wwwfiles/bin/
+    fi
+
+    for v in $versions; do
+	echo "--> sync $arch/contrib/$v"
+	rsync -e ssh -av --delete $BASE/repos/bin/macosx/$arch/contrib/$v/ ${server}:/R/cran/bin/macosx/$arch/contrib/$v/
+#	rsync -e ssh -av --delete $BASE/repos/bin/macosx/$arch/contrib/$v/ corrino.urbanek.info:/R/cran/bin/macosx/$arch/contrib/$v/
+    done
+fi

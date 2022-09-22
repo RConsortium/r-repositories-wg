@@ -1,0 +1,1 @@
+5 4-23/6 * * * /data/blackswan/ripley/R/packages/check-gcc > /data/blackswan/ripley/R/packages/check-gcc.log 2>&1

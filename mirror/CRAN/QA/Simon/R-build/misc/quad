@@ -1,0 +1,81 @@
+#!/bin/sh
+# General purpose script to build quard-arch binaries from tar balls
+# (C)2008 Simon Urbanek <simon.urbanek@r-project.org>
+#
+# Usage: quad <tar-file or directory> [extra flags to pass to configure]
+# (tar files foo.tar.gz/bz2 are assumed to unpack to foo whi is the package name)
+#
+# Optional env. var: SRCDIR can be set to the directory that contains "configure"
+# (useful for non-standard packaging like Tcl/Tk)
+#
+# creates obj.<arch>.<name> for builds and installs to
+# dst.<arch>.<name>. Main architecture is then moved to
+# dst.<name> and diffs shown + lipo commands suggested 
+
+TAR="$1"
+if [ -z "$TAR" ]; then
+    echo ''
+    echo " Usage: $0 <tar> [any extra flags]"
+    echo ''
+    exit 1
+fi
+
+shift
+
+cwd=`pwd`
+
+name=`echo "$TAR" | sed -e 's:.tar.bz2$::' -e 's:.tar.gz$::'`
+
+echo $name
+
+if [ -z "${SRCDIR}" -a "$name" != "$TAR" ]; then
+    echo "Unpacking $TAR"
+    rm -rf "$name"
+    tar fxz "$TAR" 2>/dev/null; tar fxj "$TAR" 2>/dev/null
+fi
+
+: ${SRCDIR="$cwd/$name"}
+darwin='darwin'`uname -r`
+narch=`arch | sed -e 's:ppc:powerpc:'`
+
+if [ ! -e "$SRCDIR/configure" ]; then
+    echo "ERROR: invalid source, expecting $SRCDIR/configure to exist"
+    exit 1
+fi
+
+for arch in i386 ppc x86_64 ppc64; do
+    echo " ** arch: $arch"
+    TDIR="$cwd/obj.$arch.$name"
+    DSTDIR="$cwd/dst.$arch.$name"
+    if [ -e "$TDIR/OK" ]; then
+	echo "    already built, skipping";
+    else
+	rm -rf "$TDIR"
+	mkdir -p "$TDIR"
+	cd "$TDIR"
+	larch=`echo $arch | sed -e 's:ppc:powerpc:' -e 's:ppc64:powerpc64:'`
+	echo "arch=$arch ; export arch;" "$SRCDIR/configure" "'-build=$narch-apple-$darwin'" "'--host=$larch-apple-$darwin'" "'CC=gcc -std=gnu99 -arch $arch'" "'CPP=gcc -std=gnu99 -E -arch $arch'" "'CXX=g++ -arch $arch'" $* > ".config_.sh"
+	( sh .config_.sh && make -j4 && make "DESTDIR=$DSTDIR" install && echo 'OK' > "$TDIR/OK" ) || ( echo "** FAILED: $arch **" && exit 2 )
+    fi
+done
+
+if [ ! -e "$cwd/obj.ppc64.$name/OK" ]; then exit 1; fi
+
+DST="$cwd/dst.$name"
+if [ ! -e "$DST" ]; then
+    mv "$cwd/dst.i386.$name" "$DST" || ( echo "FAILED to move i386 to $DST"; exit 1 )
+fi
+
+for arch in ppc x86_64 ppc64; do
+    DSTDIR="$cwd/dst.$arch.$name"
+    #cand=`diff -r "$DST" "$DSTDIR" | sed -n 's:^Binary files ::p' | sed -e 's: differ$::'`
+    #for fnd in $cand; do
+#	echo "$fnd"
+    #done
+    diff -r "$DST" "$DSTDIR"
+done
+echo "-- binaries --"
+for arch in ppc x86_64 ppc64; do
+    DSTDIR="$cwd/dst.$arch.$name"
+    diff -r "$DST" "$DSTDIR" | sed -n 's:^Binary files ::p' | sed -e 's: differ$::' | sed -e 's:\(.*\) and \(.*\):lipo -create \1 \2 -o \1:'
+done

@@ -1,0 +1,101 @@
+SOURCES=${shell ls *.in}
+OUTS=$(SOURCES:.in=.out)
+
+.PHONY: all check clean veryclean unpack backup package summary timing
+
+.SUFFICES:
+.SUFFICES: .in .out
+
+## use foo-VARS=MAKE=make MAKEFLAGS=  to suppress parallel installs
+RDieHarder-VARS = MAKE=make MAKEFLAGS=
+frailtypack-VARS = MAKE=make MAKEFLAGS=
+sparsegl-VARS = MAKE=make MAKEFLAGS=
+
+RAppArmor-OPTS = --install-args='--configure-vars="NO_APPARMOR=1"'
+Rserve-OPTS = --install-args='--configure-args=--without-server'
+
+restfulr-OPTS =  --no-tests
+#rsolr-OPTS = --no-vignettes
+
+## excessive CPU time
+BASS-OPTS = --no-vignettes
+amen-OPTS = --no-vignettes
+ctmm-OPTS = --no-vignettes
+hetGP-OPTS = --no-vignettes
+ivmte-OPTS = --no-vignettes
+laGP-OPTS = --no-vignettes
+lolog-OPTS = --no-vignettes
+mcemGLM-OPTS = --no-vignettes
+tgp-OPTS = --no-vignettes
+
+## excessive memory in pandoc (> 50GB)
+lifecontingencies-OPTS = --no-vignettes
+
+## slow/broken web access
+TSdata-OPTS = --no-vignettes
+
+## needs API key
+fitbitScraper-OPTS = --no-vignettes
+
+## hangs
+BMTME-OPTS = --no-tests
+
+## need gputools
+gcbd-OPTS = --no-vignettes
+
+
+## parallel install use excessive memory
+BMSC-VARS = MAKE=make MAKEFLAGS=
+blockcluster-VARS = MAKE=make MAKEFLAGS=
+
+DeLorean-VARS = MAKE=make MAKEFLAGS=
+MADPop-VARS = MAKE=make MAKEFLAGS=
+MetaStan-VARS = MAKE=make MAKEFLAGS=
+OncoBayes2-VARS = MAKE=make MAKEFLAGS=
+OpenMx-VARS = MAKE=make MAKEFLAGS=
+PosteriorBootstrap = MAKE=make MAKEFLAGS=
+RBesT-VARS = MAKE=make MAKEFLAGS=
+Rlgt-VARS = MAKE=make MAKEFLAGS=
+YPBP-VARS = MAKE=make MAKEFLAGS=
+YPPE-VARS = MAKE=make MAKEFLAGS=
+baggr-VARS = MAKE=make MAKEFLAGS=
+bayes4psy-VARS = MAKE=make MAKEFLAGS=
+bayesdfa-VARS = MAKE=make MAKEFLAGS=
+bayesvl-VARS = MAKE=make MAKEFLAGS=
+beanz-VARS = MAKE=make MAKEFLAGS=
+bellreg-VARS = MAKE=make MAKEFLAGS=
+blavaan-VARS = MAKE=make MAKEFLAGS=
+bmlm-VARS = MAKE=make MAKEFLAGS=
+breathteststan-VARS = MAKE=make MAKEFLAGS=
+bsem-VARS = MAKE=make MAKEFLAGS=
+cbq-VARS = MAKE=make MAKEFLAGS=
+conStruct-VARS = MAKE=make MAKEFLAGS=
+ctsem-VARS = MAKE=make MAKEFLAGS=
+dfpk-VARS = MAKE=make MAKEFLAGS=
+eggCounts-VARS = MAKE=make MAKEFLAGS=
+gastempt-VARS = MAKE=make MAKEFLAGS=
+glmmfields-VARS = MAKE=make MAKEFLAGS=
+hBayesDM-VARS = MAKE=make MAKEFLAGS=
+hsstan-VARS = MAKE=make MAKEFLAGS=
+idealstan-VARS = MAKE=make MAKEFLAGS=
+idem-VARS = MAKE=make MAKEFLAGS=
+llbayesireg-VARS = MAKE=make MAKEFLAGS=
+metaBMA-VARS = MAKE=make MAKEFLAGS=
+multinma-VARS = MAKE=make MAKEFLAGS=
+nlmixr-VARS = MAKE=make MAKEFLAGS=
+pcFactorStan-VARS = MAKE=make MAKEFLAGS=
+publipha-VARS = MAKE=make MAKEFLAGS=
+qmix-VARS = MAKE=make MAKEFLAGS=
+rmdcev-VARS = MAKE=make MAKEFLAGS=
+rstan-VARS = MAKE=make MAKEFLAGS=
+rstanarm-VARS = MAKE=make MAKEFLAGS=
+rstanemax-VARS = MAKE=make MAKEFLAGS=
+rstap-VARS = MAKE=make MAKEFLAGS=
+ssMousetrack-VARS = MAKE=make MAKEFLAGS=
+survHE-VARS = MAKE=make MAKEFLAGS=
+thurstonianIRT-VARS = MAKE=make MAKEFLAGS=
+tmbstan-VARS = MAKE=make MAKEFLAGS=
+trialr-VARS = MAKE=make MAKEFLAGS=
+visit-VARS = MAKE=make MAKEFLAGS=
+walker-VARS = MAKE=make MAKEFLAGS=
+

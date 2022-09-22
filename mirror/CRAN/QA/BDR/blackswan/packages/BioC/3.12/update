@@ -1,0 +1,1 @@
+rsync -rtvCL --delete master.bioconductor.org::3.12/bioc/src/contrib .

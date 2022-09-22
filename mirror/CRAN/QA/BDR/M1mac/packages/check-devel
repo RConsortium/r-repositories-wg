@@ -1,0 +1,15 @@
+#! /bin/csh
+~/R/packages/InUse.R ~/R/packages/tests-devel || exit 1
+cd R/packages
+./update
+/opt/R/arm64/bin/Rscript -e 'update.packages(.Library, ask = F)'
+~/R/no-cairo/bin/Rscript -e 'update.packages(.Library, ask = F)'
+~/R/R-patched/bin/Rscript -e 'update.packages(.Library, ask = F)'
+~/R/packages/revdeps1 ~/R/Library ~/R/packages/tests-devel/revdeps.rds
+/opt/R/arm64/bin/Rscript unavailable.R tests-devel
+env DISPLAY=:5 NOAWT=1 RMPI_TYPE=OPENMPI RGL_USE_NULL=true /opt/R/arm64/bin/Rscript updates.R
+~/R/packages/revdeps2 ~/R/Library ~/R/packages/tests-devel/revdeps.rds
+rm -f ~/R/packages/tests-devel/revdeps.rds
+cd tests-devel
+make unpack
+./script

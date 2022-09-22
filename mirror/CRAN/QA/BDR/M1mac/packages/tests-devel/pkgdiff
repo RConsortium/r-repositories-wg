@@ -1,0 +1,27 @@
+#! /opt/R/arm64/bin/Rscript
+pkgdiff <- function(from, to)
+{
+    clean <- function(txt)
+    {
+        txt <- grep("(^\\* using R|using platform|real.*user.*sys)", txt, invert = TRUE, value = TRUE, useBytes=TRUE)
+        txt <- grep("^\\* checking (use of S3 registration|for non-standard things|for detritus|LazyData.*OK|loading without being on the library search path)", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
+        txt <- grep("[*] checking HTML version of manual.* OK", txt, invert = TRUE, value = TRUE)
+        gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt, useBytes = FALSE)
+    }
+
+    left <- clean(readLines(from, warn = FALSE))
+    right <- clean(readLines(to, warn = FALSE))
+    if(length(left) != length(right) || !all(left == right)) {
+        cat("\n*** ", from, "\n", sep="")
+        writeLines(left, a <- tempfile("Rdiffa"))
+        writeLines(right, b <- tempfile("Rdiffb"))
+        system(paste("diff -bw", shQuote(a), shQuote(b)))
+    }
+}
+
+l1 <- Sys.glob("*.out")
+l2 <- Sys.glob("../tests-devel-keep/*.out")
+l3 <- basename(l2)
+options(stringsAsFactors = FALSE)
+m <- merge(data.frame(x=l1), data.frame(x=l3, y=l2))[,1]
+mm <- lapply(m, function(x) pkgdiff(x, file.path("../tests-devel-keep", x)))

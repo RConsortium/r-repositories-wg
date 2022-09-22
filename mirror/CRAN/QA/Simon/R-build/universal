@@ -1,0 +1,218 @@
+#!/bin/sh
+
+if [ x$1 == x-h -o x$1 == x--help ]; then
+    echo ""
+    echo " universal [<R-dir>]"
+    echo ""
+    echo " settings:"
+    echo " RDIRS     - directories to build R from (if R-dir is not specified)"
+    echo "             defaults to the contents of \$BASE/builds"
+    echo ""
+    exit 0;
+fi
+
+if [ -n "$1" ]; then
+    RDIRS=$1
+fi
+
+: ${BASE=/Builds/R-builds/nightly}
+: ${RDIRS=`cat $BASE/builds`}
+
+RBUILDS=$BASE
+
+. $BASE/common
+
+TNAME="$oscode-universal"
+
+mkdir -p $BASE/$TNAME
+
+if [ -z "${QUAD}" ]; then
+    if [ -z "${TRI}" ]; then
+	defarchs="ppc i386"
+    else
+	defarchs="ppc x86_64 i386"
+    fi
+else
+    defarchs="ppc64 x86_64 ppc i386"
+fi
+: ${tarchs="${defarchs}"}
+
+TS=`date +%s:%Y%m%d:%H%M%S`
+for RD in $RDIRS; do
+    rm -f $BASE/$TNAME/$RD.SUCCESS $BASE/$TNAME/$RD.FAILED
+
+    ## check available disk space before proceeding - we require at least 1GB to make sure
+    DSKF=`df -g "$BASE/$TNAME" | awk '{print $4}' | tail -n 1`
+    if [ "$DSFK" = 0 ]; then
+	echo "***FATAL ERROR: out of disk space!"
+	echo "***FATAL ERROR: out of disk space!" > $BASE/$TNAME/$RD.FAILED
+	exit 1
+    fi
+
+    miss=no
+    missppc64=no
+    for tarch in $tarchs; do	
+	if [ -e "$BASE/$oscode-$tarch/$RD-$oscode-$tarch-bld.tar.gz" -a -e "$BASE/$oscode-$tarch/$RD.SUCCESS" ]; then
+	    echo "$TS:$RD:common:collect:0:$oscode-$tarch" >> $BASE/$TNAME/build.log
+	else
+	    echo "Missing build result for $RD-$oscode-$tarch" >&2
+	    echo "Missing build result for $RD-$oscode-$tarch" >> $BASE/$TNAME/$RD.FAILED
+	    echo "$TS:$RD:common:collect:1:$oscode-$tarch" >> $BASE/$TNAME/build.log
+	    if $tarch = ppc64; then
+		missppc64=yes # for now we ignore ppc64
+	    else
+		miss=yes
+	    fi
+	fi
+    done
+
+    if [ $miss = no ]; then
+	failed=no
+	echo "Remove previous framework ..."
+	rm -rf /Library/Frameworks/R.framework 
+	RFWH=/Library/Frameworks/R.framework/Resources
+	for tarch in $tarchs; do
+	    ATNAME="$oscode-$tarch"
+
+	    echo "$RD:$ATNAME"
+	    cd $BASE/$ATNAME/$RD
+	    TS=`date +%s:%Y%m%d:%H%M%S`
+	    echo "$TS:$RD:$tarch:install" >> $BASE/$TNAME/build.log
+	    if [ "$tarch" = ppc64 -a "$ARCH" != ppc ]; then
+		if [ "$missppc64" = no ]; then # if ppc64 didn't work, don't try to install it
+		    if [ -e "$BASE/$ATNAME/${RD}-fw.tar.gz" ]; then ## use the tar ball instead
+			echo "Using $BASE/$ATNAME/${RD}-fw.tar.gz instead of install..." > $BASE/$TNAME/$RD.$tarch.inst
+			tar fxz "$BASE/$ATNAME/${RD}-fw.tar.gz" -C / 2> $BASE/$TNAME/$RD.$tarch.inst.err
+		    else
+			## install will fail on ppc64 at help indexing stage, so we have to continue manually
+			R_ARCH=/$tarch make install > $BASE/$TNAME/$RD.$tarch.inst 2> $BASE/$TNAME/$RD.$tarch.inst.err
+			## this doesn't work anymore in 2.9+ so we use tar ball instead for now
+			R_ARCH=/$tarch make install-R-framework >> $BASE/$TNAME/$RD.$tarch.inst 2>> $BASE/$TNAME/$RD.$tarch.inst.err
+		    fi
+		fi
+	    else
+		R_ARCH=/$tarch make install > $BASE/$TNAME/$RD.$tarch.inst 2> $BASE/$TNAME/$RD.$tarch.inst.err
+	    fi
+	    CR=$?
+	    if [ $CR != 0 ]; then
+		failed=yes
+		echo "make install failed for $tarch"
+		echo "make install failed for $tarch" >> $BASE/$TNAME/$RD.FAILED
+	    fi
+	    # Rscript will be overwritten each time, so move it into exec
+	    if [ -e "$RFWH/bin/Rscript" -a -e "$RFWH/bin/exec/$tarch" ]; then
+		mv "$RFWH/bin/Rscript" "$RFWH/bin/exec/$tarch/Rscript"
+	    fi
+	    TS=`date +%s:%Y%m%d:%H%M%S`
+	    echo "$TS:$RD:$tarch:install:$CR" >> $BASE/$TNAME/build.log	
+	done
+
+	if [ $failed = no ]; then
+            # fixup permissions (first run to make sure it's writable)
+	    $BASE/fixup
+
+	    # create fat Rscript (if necessary)
+	    if [ ! -e "$RFWH/bin/Rscript" ]; then
+		lipo -create $RFWH/bin/exec/*/Rscript -o "$RFWH/bin/Rscript"
+	    fi
+
+	    # determine full path to lib (via id entry in libR)
+	    LIBDIR=`otool -L /Library/Frameworks/R.framework/R | sed -n '/\/libR/s/.*\(\/Library.*\)\/libR.dylib.*/\1/p'`
+	    # fix libRblas entry in bin/exec/<arch>/R  (I still don't know why it's screwed...)
+	    for a in $tarchs; do
+		install_name_tool -change libRblas.dylib "${LIBDIR}/libRblas.dylib" /Library/Frameworks/R.framework/Resources/bin/exec/$a/R
+	    done
+
+	    # remove superfluous Makeconf
+	    rm -f /Library/Frameworks/R.framework/Resources/bin/etc/Makeconf
+
+	    # make CRAN changes to the shell script - setting R_ARCH default according to `arch` 
+	    #patch /Library/Frameworks/R.framework/Resources/bin/R < $BASE/R.sh.diff
+
+            # move readline into R and fixup the ld path
+	    rllib=`ls /usr/local/lib/libreadline.?.?.dylib|tail -n 1`
+	    rllib=`basename ${rllib}`
+	    cp /usr/local/lib/${rllib} "$LIBDIR/"
+	    chmod +w "$LIBDIR/"* 2> /dev/null
+	    install_name_tool -change /usr/local/lib/${rllib} "$LIBDIR/${rllib}" "$LIBDIR/libR.dylib"
+	    ln -s ${rllib} "$LIBDIR/libreadline.dylib"
+    
+	    # replace singe-arch dylibs with softlinks to corresponding fat library
+	    for l in "$LIBDIR/"*/*.dylib; do
+		lname=`basename "$l"`
+		if [ -e "`dirname "$l"`/../$lname" ]; then
+		    ln -sf ../$lname $l
+		fi
+	    done
+	    
+	    # generate dSYMs
+	    for l in "$LIBDIR/"libR*.dylib; do
+		dsymutil "$l"
+	    done
+
+	    # copy qpdf (if present) and set R_QPDF accordingly
+	    if [ -e "$BASE/qpdf" ]; then
+		cp "$BASE/qpdf" /Library/Frameworks/R.framework/Resources/bin/qpdf
+		for a in $tarchs; do
+		    renv="/Library/Frameworks/R.framework/Resources/etc/$a/Renviron"
+		    if [ -e "$renv" ]; then
+			echo '## CRAN R ships with qpdf inside so use it unless directed otherwise' >> "$renv"
+			echo 'R_QPDF=${R_QPDF-'"'/Library/Frameworks/R.framework/Resources/bin/qpdf'"'}' >> "$renv"
+		    fi
+		done
+	    fi
+
+	    # copy vecLib version of BLAS
+	    cp $BASE/libRblas.vecLib.dylib "${LIBDIR}/libRblas.vecLib.dylib"
+	    chmod 0775 "${LIBDIR}/libRblas.vecLib.dylib"
+	    install_name_tool -id "${LIBDIR}/libRblas.dylib" "${LIBDIR}/libRblas.dylib"
+
+	    # for comatibility with old Tiger builds copy libgfortran+libgcc_s if it's not there
+            if [ ! -e "${LIBDIR}/libgfortran.2.dylib" ]; then
+		cp "$BASE/libgfortran.2.dylib" "${LIBDIR}/libgfortran.2.dylib"
+            fi
+            if [ ! -e "${LIBDIR}/libgcc_s.1.dylib" ]; then
+		cp "$BASE/libgcc_s.1.dylib" "${LIBDIR}/libgcc_s.1.dylib"
+            fi
+
+	    # CONTROVERSIAL!! ARF!! FIXME!! We use this common copy of libRblas as the default -
+	    # even though it's never been tested! Bad, bad, bad, ...
+	    if [ -L "${LIBDIR}/libRblas.dylib" ]; then
+		rm -f "${LIBDIR}/libRblas.dylib"
+	    fi
+	    if [ -e "${LIBDIR}/libRblas.dylib" ]; then
+		mv "${LIBDIR}/libRblas.dylib" "${LIBDIR}/libRblas.0.dylib"
+	    fi
+
+	    ## since 2.12.1 we use R BLAS as default due to speed issues with vecLib
+	    ## ln -s libRblas.vecLib.dylib "${LIBDIR}/libRblas.dylib"
+	    ln -s libRblas.0.dylib "${LIBDIR}/libRblas.dylib"
+
+	    # unpack fontconfig config files and include fc-cache
+	    if [ -e $BASE/fontconfig-Rfw.tar.gz ]; then tar fxz $BASE/fontconfig-Rfw.tar.gz -C /; fi
+	    if [ -e /usr/local/bin/fc-cache ]; then cp /usr/local/bin/fc-cache $RFWH/bin/fc-cache; fi
+	    # remove any existing cache
+	    rm -rf $RFWH/fontconfig/cache/*
+
+	    # remove optimization flags, -4.2 compiler suffix and full tex paths
+	    for arch in $tarchs; do
+		sed 's:/usr/texbin/::' $RFWH/etc/$arch/Renviron > $RFWH/etc/$arch/Renviron.tmp && mv $RFWH/etc/$arch/Renviron.tmp $RFWH/etc/$arch/Renviron
+		sed -e 's:-mtune=core2 ::' -e's:-4\.2::' $RFWH/etc/$arch/Makeconf > $RFWH/etc/$arch/Makeconf.tmp && mv $RFWH/etc/$arch/Makeconf.tmp $RFWH/etc/$arch/Makeconf
+	    done
+
+	    ARHOME=`dirname "$LIBDIR"`
+	    $BASE/fixpathR "$ARHOME"
+
+            # fixup permissions
+	    $BASE/fixup
+	    install_name_tool -id "${LIBDIR}/libRblas.dylib" "${LIBDIR}/libRblas.dylib"
+	    $BASE/fixup
+	    cd /
+	    tar fcz $BASE/$RD-$TNAME.tar.gz /Library/Frameworks/R.framework
+	    cd $BASE
+
+	    echo "SUCCESS"
+	    touch $BASE/$TNAME/$RD.SUCCESS
+	fi
+    fi
+done

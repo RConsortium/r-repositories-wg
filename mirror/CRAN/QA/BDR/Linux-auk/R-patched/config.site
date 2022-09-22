@@ -1,0 +1,6 @@
+CFLAGS="-O2 -Wall -g"
+FFLAGS="-O2 -mtune=native -Wall -pedantic"
+FCFLAGS=$FFLAGS
+CXXFLAGS="-O2 -Wall -pedantic -mtune=native"
+JAVA_HOME=/usr/lib/jvm/java-1.8.0
+CXXSTD='-std=gnu++98'

@@ -1,0 +1,15 @@
+MXE_ROOT = /usr/lib/mxe
+MXE2 = $(MXE_ROOT)/usr/x86_64-w64-mingw32.static.posix
+
+BINPREF64 = $(MXE_ROOT)/usr/bin/x86_64-w64-mingw32.static.posix-
+
+EXT_LIBS = $(MXE2)
+LOCAL_SOFT = $(EXT_LIBS)
+#CURL_CA_BUNDLE = /etc/pki/tls/certs/ca-bundle.crt
+
+#LTO = -flto=10
+#LTO_OPT = -flto=4
+
+USE_LIBCURL = YES
+
+TEXI2ANY=/usr/bin/texi2any

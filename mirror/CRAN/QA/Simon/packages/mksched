@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+
+$cp=$0; $cp=~s/mksched$//; require "$cp/common.pl";
+
+$cmd='./mk.chk';
+
+@std=('R','stats','utils','graphics','grDevices','lattice','tcltk','base');
+foreach (@std) { $pfn{$_}='R'; }
+
+use DBI;
+
+sub src2bin {
+    my $dfn = $_[0];
+    $dfn =~ s:CRAN/src/contrib:$target/bin/$ver:;
+    $dfn =~ s/tar.gz$/tgz/;
+    $dfn;
+}
+
+$dbargs = {AutoCommit => 1,
+           PrintError => 1};
+
+$dbh = DBI->connect("dbi:SQLite:dbname=$root/packages.db","","",$dbargs);
+if ($dbh->err()) { die "ERROR on connect: $DBI::errstr\n"; }
+
+$q = $dbh->prepare("SELECT name, file, depends, suggests, imports, enhances FROM pkgs;");
+if ($dbh->err()) { die "ERROR on prepare query: $DBI::errstr\n"; }
+$q->execute;
+if ($dbh->err()) { die "ERROR on execute query: $DBI::errstr\n"; }
+while ((@r = $q->fetchrow_array)) {
+    $ad="$r[2],$r[3],$r[4]"; $ad=~s/\(.*?\)//g; $ad=~s/\s+//g; $ad=~s/,+/,/; $ad=~s/^,//; $ad=~s/,+$//;
+    # print "$r[0] <- $ad\n";
+    $p{$r[0]}=$ad;
+    $pfn{$r[0]}=$r[1];
+}
+$q->finish;
+$dbh->disconnect;
+$all='';
+foreach(sort(keys(%pfn))) {
+    $fn=$pfn{$_};
+    @dl = split ',', $p{$_};
+    $cd = '';
+    foreach $d (@dl) {
+	if ($pfn{$d} eq '') {
+	    $mp{$d}=1;
+	} elsif ($pfn{$d} ne 'R') {
+	    $dfn = src2bin($pfn{$d});
+	    $cd .= " $dfn";
+	}
+    }
+    print src2bin($fn).": $fn$cd\n\t$cmd $_\n\n";
+    $all.=src2bin($fn)." ";
+}
+
+chop $all;
+print "\n\nall: $all\n\n";
+#print "$root/$target/bin/$ver/%.tgz: $root/CRAN/src/contrib/%.tar.gz\n\t./mk.chk `echo $@|sed 's:$root/$target/bin/$ver/::'|sed 's:_.*::'` 
+
+print "# missing packages:";
+foreach(sort(keys(%mp))) { print " $_"; }
+print "\n";

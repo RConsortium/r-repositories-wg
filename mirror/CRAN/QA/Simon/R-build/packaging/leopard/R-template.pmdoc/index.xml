@@ -1,0 +1,73 @@
+<pkmkdoc spec="1.12"><properties><title>R %VER% for Mac OS X 10.5 or higher (Leopard build)</title><build>/Volumes/Data/Builds/osx.packages/R-Leopard/R.pkg</build><organization>org.r-project.R.Leopard</organization><userSees ui="both"/><min-target os="3"/><domain anywhere="true" system="true"/></properties><distribution><versions min-spec="1.000000"/><scripts></scripts></distribution><description>R %VER% for Mac OS X 10.5 (Leopard) and higher. This package contains universal, Leopard build of R (both 32-bit and 64-bit). This package includes the R %VER% framework and R GUI %GUIVER%.
+</description><contents><choice title="R %VER% Framework" id="rfw" tooltip="R %VER% Framework (universal 32-bit and 64-bit)" description="R framework version %VER% (universal 32-bit and 64-bit) for Mac OS X 10.5 (Leopard) or higher. This package contains the full framework necessary for the use of R on Intel and PowerPC Macs." starts_selected="true" starts_enabled="true" starts_hidden="false"><pkgref id="org.r-project.R.Leopard.fw.pkg"/></choice><choice title="R GUI %GUIVER% (32-bit)" id="gui" tooltip="R for Mac OS X GUI %GUIVER% Application 32-bit" description="This is the Mac GUI application for R (32-bit version). It requires a compatible R framework to be installed as well. " starts_selected="true" starts_enabled="true" starts_hidden="false"><pkgref id="org.r-project.R.Leopard.GUI.pkg"/></choice><choice title="R GUI %GUIVER% (64-bit)" id="gui64" tooltip="R for Mac OS X GUI %GUIVER% Application 64-bit" description="This is the Mac GUI application for R (64-bit version). It requires a compatible R framework to be installed as well." starts_selected="true" starts_enabled="true" starts_hidden="false"><pkgref id="org.r-project.R.Leopard.GUI64.pkg"/><choice-reqs><requirement id="sysc" operator="eq" value="'1'" selected="no" enabled="unchanged" hidden="unchanged" startSelected="no" startEnabled="unchanged" startHidden="unchanged"><argument>hw.cpu64bit_capable</argument></requirement></choice-reqs></choice></contents><resources bg-scale="none" bg-align="topleft"><locale lang="en"><resource relative="true" mod="true" type="background">background.tiff</resource><resource mime-type="text/rtf" kind="embedded" type="license"><![CDATA[{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf540
+{\fonttbl\f0\fnil\fcharset0 LucidaGrande;}
+{\colortbl;\red255\green255\blue255;}
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural
+
+\f0\fs24 \cf0 This software is distributed under the terms of the GNU GENERAL PUBLIC LICENSE Version 2, June 1991.  The terms of this license are in a file called COPYING which you should have received with this software.\
+\
+If you have not received a copy of this file, you can obtain one via WWW at  http://www.gnu.org/copyleft/gpl.html, or by writing to:\
+\
+   The Free Software Foundation, Inc.,\
+   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\
+\
+A small number of files (the API header files and export files, listed in R_HOME/COPYRIGHTS) are distributed under the LESSER GNU GENERAL PUBLIC LICENSE version 2.1. This can be obtained via WWW at http://www.gnu.org/copyleft/lgpl.html, or by writing to the address above\
+\
+The above licenses govern distribution, not use.\
+\
+``Share and Enjoy.''\
+}]]></resource><resource mime-type="text/rtf" kind="embedded" type="readme"><![CDATA[{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf540
+{\fonttbl\f0\fnil\fcharset0 LucidaGrande;\f1\fnil\fcharset0 Monaco;}
+{\colortbl;\red255\green255\blue255;\red1\green0\blue144;}
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\qc
+
+\f0\b\fs48 \cf0 R %VER%\
+
+\b0\fs26 Version %VERFULL%\
+
+\fs24 for Mac OS X 10.5 (Leopard) and higher\
+
+\fs22 Universal (32-bit and 64-bit)\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural
+
+\fs24 \cf0 \
+This multi-package contains following main components:\
+- 
+\b R Framework %VER%
+\b0 \
+- 
+\b R.app GUI %GUIVER%
+\b0 \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural
+\cf0 \ul \ulc0 Requirements:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural
+\cf0 \ulnone - Mac OS X 10.5 (Leopard) or 10.6 (Snow Leopard)\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural
+
+\b \cf0 \ul Note
+\b0 :\ulnone  By default the installer upgrades previous Leopard build of R  if present. If you want to keep the previous Leopard build, use\
+
+\f1 \cf2 pkgutil --forget org.r-project.R.Leopard.fw.pkg
+\f0 \cf0 \
+\
+The Cocoa GUI called 
+\b R.app
+\b0  (32-bit) and 
+\b R64.app 
+\b0 (64-bit) will be installed by default in your 
+\fs22 Applications
+\fs24  folder,  
+\b R framework
+\b0  will be installed in 
+\f1 /Library/Frameworks
+\f0 .}]]></resource><resource mime-type="text/rtf" kind="embedded" type="welcome"><![CDATA[{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf540
+{\fonttbl\f0\fnil\fcharset0 LucidaGrande;}
+{\colortbl;\red255\green255\blue255;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+
+\f0\fs26 \cf0 This installer will guide you through the steps necessary to setup 
+\b R %VERFULL% for Mac OS X 10.5 (Leopard) or higher
+\b0  on your machine.\
+}]]></resource></locale></resources><requirements><requirement id="tosv" operator="ge" value="'10.5.0'"><message>Leopard build of R requires Mac OS X 10.5 or higher. Use Tiger build (available from CRAN) for older systems.</message></requirement></requirements><flags/><item type="file">01r.xml</item><item type="file">02r.xml</item><item type="file">03r.xml</item><mod>properties.customizeOption</mod><mod>properties.userDomain</mod><mod>properties.title</mod><mod>description</mod><mod>properties.anywhereDomain</mod><mod>properties.systemDomain</mod></pkmkdoc>

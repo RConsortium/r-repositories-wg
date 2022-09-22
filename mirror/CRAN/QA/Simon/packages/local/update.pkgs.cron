@@ -1,0 +1,116 @@
+#!/bin/sh
+# optional (disabled by default):
+# BUILD_DEVEL=yes
+# PARALLEL=yes
+
+: ${BASE=/Builds/packages}
+
+SYNCF="${BASE}/nightly.sync"
+
+cd "${BASE}"
+if [ -e lock.nightly.update ]; then
+    LPID=`cat $BASE/lock.nightly.update`
+    if ps -p $LPID|grep update; then
+        echo "Nightly update is locked by another build, pid $LPID." &1>2
+        exit 1
+    else
+        echo "Stale lock for pid $LPID, removing"
+        rm -f $BASE/lock.nightly.update
+    fi
+fi
+echo "$$" > lock.nightly.update
+
+: ${ismaster=no}
+host=`hostname -s|tr A-Z a-z`
+#if [ "$host" = "ginaz" ]; then
+    # Ginaz is the master machine now
+#    ismaster=yes
+#fi
+PATH=$PATH:/usr/local/bin
+if [ -e /usr/texbin ]; then
+    PATH=$PATH:/usr/texbin
+fi
+export ismaster
+export PATH
+export BASE
+
+echo " Base path: ${BASE}"
+echo " Build machine: $host"
+echo " it this the master: $ismaster"
+
+if [ "$host" = "ginaz" ]; then
+  $BASE/sync.bioc.in
+fi
+
+# move current framework aside (if existent)
+if [ -e /Library/Frameworks/R.framework ]; then
+    if [ -e /Library/Frameworks/R.framework.sav ]; then
+	rm -rf /Library/Frameworks/R.framework.sav
+    fi
+    mv /Library/Frameworks/R.framework /Library/Frameworks/R.framework.sav
+fi
+
+for RVERSI in `cat $BASE/vers`; do
+  RFWBIN=`echo "${RVERSI}" | sed -e 's/.*://'`
+  ASKVER=`echo "${RVERSI}" | sed -e 's/:.*//'`
+
+  echo "Restoring R ${ASKVER}.x from ${RFWBIN} ..."
+  # restore R release for the builds
+  rm -rf /Library/Frameworks/R.framework
+  tar fxz "${RFWBIN}" -C /
+
+  ver=`R --version|sed -n 's/R version \([0-9]\{1,\}\.[0-9]\{1,\}\).*/\1/p'`
+  echo "R reports version ${ver}"
+  if [ "${ver}" != "${ASKVER}" ]; then
+      echo "*** ERROR version mismatch! (need '${ASKVER}', have '${ver}')"
+      R --version > "$BASE/ERROR_MISMATCH_${ASKVER}"
+  else
+      echo "*** R version for the package builds: ***"
+      R --version|grep ^R
+      echo ""
+
+      ./cran.preflight
+
+      cd "${BASE}"
+      make cache
+
+      if [ -z "${SKIP_UPDATE}" ]; then
+	  cd "${BASE}"
+	  UPDATE=1 ./mk.chk
+      fi
+
+      if [ -n "${DO_BIOC}" ]; then
+	  cd "${BASE}"
+	  make -C BIOC.new cache
+	  CHECK=1 ./run.bioc
+      fi
+  fi
+done
+
+# the only official binaries we support now are for tiger
+# naw, Leopard has its own branch now
+#if [ $oscode = tiger ]; then
+    cd "${BASE}"
+    ./rm-orphans
+    ./up.repos
+#fi
+
+cd "${BASE}"
+./rm-orphan-results
+./sync-rcheck
+#/Builds/packages/local/bin-out
+
+if [ -e "${BASE}/summary/run" ]; then
+    cd "${BASE}/summary"
+    ./run
+fi
+
+cd "${BASE}"
+# restore current R release for the builds
+rm -rf /Library/Frameworks/R.framework
+tar fxz R-current.tar.gz -C /
+
+#--- cleanup
+rm -f ${BASE}/lock.nightly.update
+
+${BASE}/cleantmp >/dev/null 2>/dev/null

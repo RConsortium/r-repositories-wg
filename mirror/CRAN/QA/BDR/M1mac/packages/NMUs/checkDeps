@@ -1,0 +1,7 @@
+#!/bin/csh
+source ~/R/packages/common.csh
+
+foreach f ($*)
+  ~/R/R-devel/bin/Rscript checkDeps.R $f
+  ./pkgdiff $f
+end

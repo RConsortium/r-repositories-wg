@@ -1,0 +1,41 @@
+#! /bin/csh
+set path=(. ~/bin /usr/local/bin /opt/developerstudio12.5/bin /usr/xpg4/bin /usr/ccs/bin /usr/bin/X11 /usr/openwin/bin /opt/jdk1.7.0_65/bin /bin /usr/bin /usr/sbin /sbin /opt/csw/bin /usr/sfw/bin /usr/local/texlive/current/bin/i386-solaris /opt/SUNWhpc/HPC8.2.1c/sun/bin)
+
+setenv PKG_CONFIG_PATH /opt/csw/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig
+
+~/R/packages/InUse.R ~/R/packages/tests32 || exit 1
+
+cd ~/R
+./update
+gmake -j10 -C ~/R/cc
+gmake -j10 -C ~/R/gcc
+
+limit cputime 30m
+
+setenv DISPLAY :5
+setenv RGL_USE_NULL true
+
+setenv LC_CTYPE en_GB.UTF-8
+setenv _R_CHECK_TIMINGS_ 10
+setenv _R_CHECK_INSTALL_DEPENDS_ TRUE
+setenv _R_CHECK_SUGGESTS_ONLY_ TRUE
+setenv _R_CHECK_NO_RECOMMENDED_ TRUE
+setenv _R_CHECK_DEPRECATED_DEFUNCT_ true
+setenv _R_CHECK_THINGS_IN_CHECK_DIR_ true
+setenv _R_CHECK_THINGS_IN_TEMP_DIR_ true
+
+cd R/packages
+
+~/R/packages/revdeps1 ~/R/Lib32 ~/R/packages/tests32/revdeps.rds
+env MAKE=gmake Rscript updateBioC.R
+env MAKE=gmake GREP=ggrep ~/R/gcc/bin/Rscript updateBioC.R
+#Rscript -e 'update.packages(.Library, ask = F)'
+#~/R/gcc/bin/Rscript -e 'update.packages(.Library, ask = F)'
+cd tests32
+env R_DEFAULT_INTERNET_TIMEOUT=300 make install
+~/R/packages/revdeps2 ~/R/Lib32 ~/R/packages/tests32/revdeps.rds
+rm -f ~/R/packages/tests32/revdeps.rds
+./script
+echo 'packaging'
+make package
+echo 'done'

@@ -1,0 +1,100 @@
+#!/bin/sh
+
+PKGM="/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker"
+if [ ! -x "${PKGM}" ]; then
+    echo "** ERROR: cannot find PackageMaker"
+    exit 1
+fi
+
+if [ -z "${CONF}" ]; then
+    CONF="$1"
+fi
+if [ -z "${CONF}" ]; then
+    CONF=conf
+fi
+if [ ! -e "${CONF}" ]; then
+    echo "** ERROR: cannot find configuration file ${CONF}"
+    exit 1
+fi
+
+. "${CONF}"
+
+if [ -z "${VER}" ]; then
+    echo "** ERROR: configuration file doesn't contain necessary settings"
+    exit 1
+fi
+
+echo ""
+echo " Target path: ${RRPATH}"
+echo "  - R ${VERFULL}"
+echo "  - GUI ${GUIVER} (${GUISVN})"
+echo ""
+
+if [ ! -e "${RRPATH}/R.pmproj" ]; then
+    echo "** ERROR: cannot find R.pmproj main project"
+    exit 1
+fi
+
+if [ -z "$FIX" ]; then
+
+echo " - Removing previous builds ..."
+rm -rf "${RRPATH}/R-${VER}" "${RRPATH}/R-${VER}-mini"
+mkdir -p "${RRPATH}/R-${VER}/Packages" "${RRPATH}/R-${VER}-mini/Packages"
+
+echo " - Building base packages ..."
+
+echo "   - R framework"
+"${PKGM}" -build -proj "${RRPATH}/R-fw/R-Framework.pmproj" -p "${RRPATH}/R-${VER}/Packages/R-Framework.pkg"
+echo "   - R GUI"
+"${PKGM}" -build -proj "${RRPATH}/GUI/R-GUI.pmproj" -p "${RRPATH}/R-${VER}/Packages/R-GUI.pkg"
+
+if [ -z "${MINIONLY}" ]; then
+    if [ ! -e "${BASE}/common" ]; then
+	echo " - Extracting common files ..."
+        tar fxj "${BASE}/common.tar.bz2" -C "${BASE}"
+    fi
+    
+    echo " - Copying common packages ..."
+    echo "   - GNU Fortran"
+    ditto "${BASE}/common/gfortran.pkg" "${RRPATH}/R-${VER}/Packages/gfortran.pkg"
+    echo "   - Tcl/Tk"
+    ditto "${BASE}/common/tcltk.pkg" "${RRPATH}/R-${VER}/Packages/tcltk.pkg"
+fi
+
+echo " - Adjusting installed sizes ..."
+
+rm -rf "${RRPATH}/sizes"
+for pkg in R-Framework R-GUI; do
+    ID=`grep CFBundleIdentifier -A1 "${RRPATH}/R-${VER}/Packages/${pkg}.pkg/Contents/Info.plist" |sed -n '2 s|.\{0,\}<string>\(.\{0,\}\)</string>.\{0,\}|\1|p'`
+    SIZE=`sed -n 's|InstalledSize ||p' "${RRPATH}/R-${VER}/Packages/${pkg}.pkg/Contents/Resources/${pkg}.sizes"`
+    echo "   - ${pkg} ($ID) ${SIZE}kB"
+    echo "${ID}|${SIZE}" >> "${RRPATH}/sizes"
+done
+cat "${RRPATH}/sizes"|"${BASE}/adjsizes" "${RRPATH}/R.pmproj" "${RRPATH}/R-mini.pmproj"
+
+echo " - Building metapackages ..."
+echo "   - R full"
+"${PKGM}" -build -proj "${RRPATH}/R.pmproj" -p "${RRPATH}/R-${VER}/R.mpkg"
+echo "   - R mini"
+"${PKGM}" -build -proj "${RRPATH}/R-mini.pmproj" -p "${RRPATH}/R-${VER}-mini/R.mpkg"
+
+echo " - Copying packages from regular to mini"
+echo "   - framework"
+ditto "${RRPATH}/R-${VER}/Packages/R-Framework.pkg" "${RRPATH}/R-${VER}-mini/Packages/R-Framework.pkg"
+echo "   - GUI"
+ditto "${RRPATH}/R-${VER}/Packages/R-GUI.pkg" "${RRPATH}/R-${VER}-mini/Packages/R-GUI.pkg"
+
+fi
+
+echo " - Fixing conditions"
+for pkg in `ls -d "${RRPATH}/R-${VER}/Packages/"*.pkg "${RRPATH}/R-${VER}-mini/Packages/"*.pkg`; do
+    echo "   - ${pkg}"
+    "${BASE}/fix.pkg" "${pkg}"
+done
+
+if [ -n "${MINIONLY}" ]; then
+    echo " - Removing full R build"
+    rm -rf "${RRPATH}/R-${VER}"
+fi
+
+echo "Done."

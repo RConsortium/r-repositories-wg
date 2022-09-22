@@ -1,0 +1,10 @@
+CC=/usr/local/clang13/bin/clang
+OBJC=/usr/local/clang13/bin/clang
+CXX=/usr/local/clang13/bin/clang++
+FC=gfortran
+CFLAGS="-g -O3 -Wall -pedantic"
+FFLAGS="-g -O2 -mtune=native -Wall -pedantic"
+CXXFLAGS="-g -O3 -Wall -pedantic -frtti"
+CPPFLAGS="-isystem /usr/local/clang13/include"
+JAVA_HOME=/usr/lib/jvm/java-11
+LDFLAGS="-L/usr/local/clang/lib64 -L/usr/local/clang13/lib -L/usr/local/lib64"

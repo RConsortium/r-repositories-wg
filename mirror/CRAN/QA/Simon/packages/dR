@@ -1,0 +1,11 @@
+#!/bin/sh
+
+: ${BASE=/Builds/packages}
+
+cd "${BASE}"
+
+# restore current R-devel for the builds
+rm -rf /Library/Frameworks/R.framework
+tar fxz R-devel.tar.gz -C /
+
+R --version |grep ^R

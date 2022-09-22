@@ -1,0 +1,30 @@
+SOURCES=${shell ls *.in}
+OUTS=$(SOURCES:.in=.out)
+
+.SUFFICES:
+.SUFFICES: .in .out
+
+
+rgdal-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
+sf-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/usr/opt/R/arm64/share/proj'"
+RVowpalWabbit-OPTS = --install-args="--configure-args='--with-boost=/opt/R/arm64'"
+
+## use foo-VARS=MAKE=make MAKEFLAGS=  to suppress parallel installs
+RDieHarder-VARS = MAKE=make MAKEFLAGS=
+frailtypack-VARS = MAKE=make MAKEFLAGS=
+sparsegl-VARS = MAKE=make MAKEFLAGS=
+
+## excessive CPU time
+hetGP-OPTS = --no-vignettes
+laGP-OPTS = --no-vignettes
+mcemGLM-OPTS = --no-vignettes
+tgp-OPTS = --no-vignettes
+
+## needs API key
+fitbitScraper-OPTS = --no-vignettes
+
+## needs running MySQL DB, Java error in TSdbi
+TSdata-OPTS = --no-vignettes
+
+## crash etc
+iplots-OPTS = --no-examples

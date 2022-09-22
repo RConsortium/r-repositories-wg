@@ -1,0 +1,2 @@
+~/R/svn/R-devel/configure -C CFLAGS="-g -O2 -Wall -pedantic -Wunused-but-set-variable -mtune=core2" FFLAGS="-g -O2 -mtune=core2" FCFLAGS="-g -O2 -mtune=core2" CXXFLAGS="-g -O2 -Wall -pedantic -mtune=core2 -Wunused-but-set-variable" --enable-maintainer-mode
+

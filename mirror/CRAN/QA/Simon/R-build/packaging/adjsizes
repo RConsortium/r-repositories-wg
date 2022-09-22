@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+while (<STDIN>) {
+    s/[\r\n]+//g;
+    ($id,$size)=split /\|/;
+    $p{$id}=$size;
+}
+
+while ($fn=shift) {
+    print "$fn\n";
+    system "/usr/bin/plutil -convert xml1 \"$fn\"";
+    $c=''; $rs=0;
+    open IN, "$fn";
+    while (<IN>) {
+	if (/<string>(.*)<\/string>/) {
+	    $id=$1;
+	    foreach $k (keys(%p)) { if ($k eq $id) {
+		$rs=4; $rz=$p{$k}; last;
+	    }  }
+	}
+	$rs-- if ($rs);
+	if ($rs == 1) {
+	    s/(<integer>).*(<\/integer>)/$1$rz$2/;
+	}
+	$c.=$_;
+    }
+    close IN;
+    open OUT, ">$fn";
+    print OUT $c;
+    close OUT;
+    system "/usr/bin/plutil -convert binary1 \"$fn\"";
+}

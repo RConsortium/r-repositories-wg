@@ -1,0 +1,98 @@
+#!/bin/sh
+
+# input parameters: tar-files to check/fix
+# fixes permissions of tar balls - changes user/group to root/admin
+# and makes everything group-writable
+# only files with different owner/group are touched
+# uses /tmp/fixx.<random> as temporary working directory, must be run as root
+# fixes paths to libraries in /usr/local that are also installed in R
+
+RNAME=`openssl rand -base64 6|sed 'y|/|-|'`
+TDIR="/tmp/fixx.${RNAME}"
+rm -rf "${TDIR}"
+mkdir -p "${TDIR}" 2> /dev/null
+TARS=$*
+TWD=`pwd`
+for pkg in $TARS; do
+    cd $TWD
+    RP=`echo $pkg|sed -n 's|^\(.\{1,\}\)/.\{0,\}|\1|p'`
+    if [ -z "$RP" ]; then
+	RP=.
+    fi
+    cd $RP
+    AP=`pwd`
+    RP=`echo $pkg|sed 's|^.\{1,\}/||'`
+    pkg="$AP/$RP"
+    if [ ! -e "$pkg" ]; then
+	echo "ERROR: can't canonicalize path, got $pkg" 1>&2
+    fi
+    cd $TWD
+    DT=`tar fvtz $pkg \*/DESCRIPTION 2> /dev/null`
+    if [ -n "$DT" ]; then
+	echo "$DT"|grep root/admin > /dev/null
+	if [ $? == 1 -o x$FORCE == x1 ]; then
+	    echo "FIX:$pkg"
+	    rm -rf ${TDIR}/x
+	    mkdir -p ${TDIR}/x
+	    cd ${TDIR}/x
+	    tar fxz $pkg
+	    cd ${TDIR}
+	    /usr/sbin/chown -R root:admin ${TDIR}/x
+	    /bin/chmod -R g+w ${TDIR}/x
+	    cd ${TDIR}/x
+	    # fix paths to local libs if any
+	    # - first find the link path to libR
+	    sos=`find . -name \*.so`
+	    goodso=''
+	    rlib=''
+	    for so in $sos; do
+		if otool -L $so|grep /libR.dylib >/dev/null; then
+		    goodso=$so
+		    break;
+		fi
+	    done
+	    if [ -n "$goodso" ]; then
+		rlib=`otool -L $goodso 2> /dev/null | sed -n 's|.\(.\{0,\}\)/libR.dylib.\{0,\}|\1|p'|head -n 1`
+	    fi
+	    if [ -z "$rlib" -a -n "$DEFAULT_RLIB" ]; then
+		rlib=${DEFAULT_RLIB}
+	    fi
+	    #   continue only if we found it
+	    if [ -e "$rlib/libR.dylib" ]; then
+		# now go through all so/dylibs we find
+		libs=`find . -name \*.so -or -name \*.dylib -or -name \*.jnilib`
+		for lib in $libs; do
+		    # in each so/dylib/jnilib, find dependent libraries beginning with /usr/local
+		    echo "LFX: fixing $lib"
+		    lds=`otool -L $lib| sed -n 's|.\(/usr/local.\{0,\}\) (com.\{0,\}|\1|p'`
+		    for ld in $lds; do
+			# find out what the baes name of the linked dylib is
+			ldname=`echo $ld|sed 's|.\{0,\}/\(.\{0,\}.dylib\)|\1|'`
+			if [ -e "$rlib/$ldname" ]; then
+			    # if a copy exists in the same location as libR.dylib, fix it
+			    echo "LDI: $ld -> $rlib/$ldname"
+			    install_name_tool -change "$ld" "$rlib/$ldname" $lib
+			else
+			    # otherwise warn - that is an unresolved dependency
+			    echo "LDW: WARNING: $ld not found in $rlib/$ldname"
+			fi
+		    done
+		    # find local references to Rlib in IDs (essentially a fix for Rcpp)
+		    # and only if installed in system location
+		    lid=`otool -D $lib| sed -n 2p | sed -n '/packages\/.*\/Rlib\//p'`
+		    if [ -n "$lid" ]; then # need to fix the id
+			rid=`echo $lid| sed 's:.*packages/.*/Rlib/[0-9.]\{2,\}/::'`
+			install_name_tool -id `dirname $rlib`/library/"$rid" "$lib"
+		    fi
+		done
+	    else
+		echo "Cannot find rlib!"
+	    fi
+            tar fcz $pkg *
+	else
+	    echo "OK :$pkg"
+	fi
+    fi
+done
+cd $TWD
+rm -rf ${TDIR} 2> /dev/null

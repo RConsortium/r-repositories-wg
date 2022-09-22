@@ -1,0 +1,13 @@
+we need
+
+Xvfb :5 -screen 0 1280x1024x24 &
+setenv DISPLAY :5
+limit cputime 300
+
+and have been known to need
+Xvfb -screen 0 1280x1024x24 -ac :5 &
+
+(set path = ($path /usr/lib64/lam/bin); lamboot -v)
+
+setenv LAMHOME /usr/lib64/lam
+

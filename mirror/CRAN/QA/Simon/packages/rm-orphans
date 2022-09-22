@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+# Usage: rm-orphans [<location> [<sources>]]
+#
+# Without any parameters performs search on versions specified below
+# Orphans are moved from ../bin/.. to ../orphans/.. (/bin/ in location is assued)
+#
+
+LOC="$1"
+SRC="$2"
+VERS=none
+if [ -z "$LOC" ]; then
+    VERS=`sed 's/:.*//' vers`
+    maj=`uname -r|sed 's:\..*::'`
+    if [ "$maj" = 8 ]; then OSCODE=tiger; else OSCODE=leopard; fi
+    SYNTH=yes
+fi
+
+for ver in $VERS; do
+    if [ "$SYNTH" = yes ]; then
+	LOC=$OSCODE-universal/bin/$ver
+    fi
+    if [ -z "$SRC" ]; then
+	SRC=CRAN/src/contrib
+    fi
+
+    echo "Checking $LOC vs $SRC"
+
+    ORPH=`echo "${LOC}"|sed 's:/bin/:/orphan/:'`
+    mkdir -p "$ORPH"
+    for i in `ls $LOC/|sed s:_.*::`; do
+	if ls $SRC/${i}_* >/dev/null 2>/dev/null; then
+	    echo "OK  $i" > /dev/null
+	else
+	    echo "*** $i"
+	    mv "$LOC/${i}_"* "$ORPH"
+	fi
+    done
+done

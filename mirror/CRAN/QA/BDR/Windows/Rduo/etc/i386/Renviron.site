@@ -1,0 +1,28 @@
+GDAL_HOME=c:/R/local
+## RGL likes this
+HAVE_PNG=true
+HDF5=c:/R/W32/addlibs/Support/HDF5
+ICU_PATH=/R/Support/icu-distrib
+LIB_CURL=c:/R/Support/Curl
+MYSQL_HOME=c:/packages/MySQL32
+NLOPT_HOME=/R/Support/nlopt
+UDUNITS2_HOME=c:/R/local
+
+## for runjags
+JAGS_ROOT=c:/packages/JAGS/JAGS-4.0.0
+
+
+MYSQL_HOME=c:/packages/MySQL32
+MYSQL_USER=root
+MYSQL_PASSWD=spatial
+POSTGRES_USER=postgres
+POSTGRES_PASSWD=spatial
+POSTGRES_DATABASE=ripley
+
+# DLLs needed: Gtk+, graphviz, ImageMagick (for EBimage)
+PATH32="c:/R/W32/GTK-2.22/bin;c:/packages/ggobi;c:/packages/ImageMagick-6.7.4-Q16;c:/R/gdalUtils/i386;c:/packages/MARK"
+
+# maybe add paths for pthreads DLLs?
+PATH=".;c:/R/Rtools/bin;c:/R/Rduo/bin/i386;c:/R/my/multi/bin;c:/packages/miktex2.9/miktex/bin/x64;c:/packages/gs32/gs9.18/bin;c:/packages/merlin-1.1.2;c:/R/Rtools/perl/bin;c:/ourutils;c:/packages/qpdf/bin;c:/packages/MARK;${PATH32};c:/Windows/System32"
+
+SHELL=c:/Windows/system32/cmd.exe

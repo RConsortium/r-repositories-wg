@@ -1,0 +1,9 @@
+CC='gcc -m32' 
+CXX='g++ -m32' 
+FC='gfortran -m32'
+OBJC=${CC}
+CFLAGS="-g -O2 -Wall -pedantic -mtune=native"
+FFLAGS="-g -O2 -mtune=native"
+CXXFLAGS="-g -O2 -Wall -pedantic -mtune=native"
+LIBnn=lib
+LDFLAGS=-L/usr/local/lib

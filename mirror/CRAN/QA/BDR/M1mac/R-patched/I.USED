@@ -1,0 +1,5 @@
+~/R/svn/R-4-2-branch/configure -C \
+--enable-R-shlib --enable-memory-profiling \
+--with-tcl-config=/opt/R/arm64/lib/tclConfig.sh \
+--with-tk-config=/opt/R/arm64/lib/tkConfig.sh \
+PKG_CONFIG_PATH=/opt/R/arm64/lib/pkgconfig:/usr/lib/pkgconfig

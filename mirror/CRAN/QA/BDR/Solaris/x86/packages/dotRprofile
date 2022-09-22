@@ -1,0 +1,6 @@
+options(BioC_mirror="https://bioconductor.statistik.tu-dortmund.de")
+#options(BioC_mirror="https://mirrors.ebi.ac.uk/bioconductor/")
+if(getRversion() >= "4.2.0") .libPaths("~/R/Lib32-dev") else .libPaths("~/R/Lib32")
+#options(repos=c(CRAN="http://cran.r-project.org"))
+options(repos=c(CRAN="file:///home/ripley/R"))
+options(show.signif.stars=FALSE)

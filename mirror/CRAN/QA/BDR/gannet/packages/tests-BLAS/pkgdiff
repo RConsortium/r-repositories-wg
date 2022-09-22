@@ -1,0 +1,26 @@
+#! /usr/bin/env Rscript
+pkgdiff <- function(from, to)
+{
+    clean <- function(txt)
+    {
+        txt <- grep("^(\\* using R|Time) ", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
+        gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt)
+    }
+
+    left <- clean(readLines(from, warn = FALSE))
+    left <- sub("tests-BLAS", "tests-devel", left)
+    right <- clean(readLines(to, warn = FALSE))
+    if(length(left) != length(right) || !all(left == right)) {
+        cat("\n*** ", from, "\n", sep="")
+        writeLines(left, a <- tempfile("Rdiffa"))
+        writeLines(right, b <- tempfile("Rdiffb"))
+        system(paste("diff -bw", shQuote(a), shQuote(b)))
+    }
+}
+
+l1 <- Sys.glob("*.out")
+l2 <- Sys.glob("../tests-devel/*.out")
+l3 <- basename(l2)
+options(stringsAsFactors = FALSE)
+m <- merge(data.frame(x=l1), data.frame(x=l3, y=l2))[,1]
+mm <- lapply(m, function(x) pkgdiff(x, file.path("../tests-devel", x)))

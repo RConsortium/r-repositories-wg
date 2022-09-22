@@ -1,0 +1,20 @@
+This is a partial copy of the nightly build system for R and packages
+on Mac OS X. The packages system builds both CRAN and Bioconductor
+(but the BioC build requires manual intervention when the release
+number changes).
+
+The layout on the build machine is as follows:
+/Builds/packages         -> Simon/packages
+/Builds/R-builds/nightly -> Simon/R-build
+
+The root is defined by BASE or RBUILDS environment variables (most
+scripts are migrated to BASE now, but not all of them, yet).
+
+I hope to migrate the whole system into SVN soon, the current state is
+untested as some files local to the machine are not included.
+
+"local" directory holds auxiliary files specific to some build
+machines (such as crontabs etc.).
+
+--
+Simon Urbanek 2006/09/25

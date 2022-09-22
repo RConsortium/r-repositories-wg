@@ -1,0 +1,194 @@
+#!/usr/bin/perl
+
+$realsrc=$src=shift;
+if ($src eq '--desc') {
+    $usedesc=1;
+    $src=shift;
+    $realsrc=shift;
+}
+if ($src eq '' || $src eq '--help' || $src eq '-h') {
+    print "\n Usage: dtree [--desc <desc-dir>] <directory> [<dir2> ...]
+
+ Creates list of packages in <directory> such that dependent packages are
+ listed after their prerequisites. When using cached descriptions, only
+ pacakges actually present as sources in <directory> are listed.
+
+ Options: --desc   look for cached *.DESCRIPTION in <desc-dir>
+
+ Note that additional directories are used for dependence detection but their
+ content is not printed.
+
+";
+    exit 1;
+}
+
+# base packages
+@repkg=('base','boot','class','cluster','datasets','foreign','graphics','grDevices','grid','KernSmooth','lattice','MASS',
+	'methods','mgcv','nlme','nnet','rpart','spatial','splines','stats','stats4','survival','tcltk','tools','utils');
+
+foreach(@repkg) { $sx{$_}=1; };
+
+if ($usedesc>0) {
+    @f=<$src/*.DESCRIPTION>;
+} else {
+    @f=<$src/*.tar.gz>;
+}
+
+$mkmk=1 if ($ENV{MKF} ne '');
+
+foreach(@f) {
+    undef $pkg; undef $dep; undef $sug; undef $ver; undef $bdl; undef $cts;
+    $tar=$_;
+    $fn=$_; $fn=~s/.*\///;
+    if ($usedesc > 0) {
+	open IN, $tar;
+    } else {
+	$pn = $fn; $pn =~ s/_.*//;
+	open IN, "tar fxzO $_ $pn/DESCRIPTION|";
+    }
+    $lines = 0;
+    $lk='';
+    undef %hh;
+    while (<IN>) {
+	$lines++;
+	$ignore = 0;
+	s/[\r\n]+//g;
+	if (/^\s+(.*)/) { $_="$lk:$1" } elsif (/^(.*?):/) {
+	    $hn = lc $1; $on = $1;
+	    if ($hh{$hn} > 0) {
+		$ignore = 1;
+		$ad='';
+		if ($hn eq 'package') { $ad = " (old $pkg, new $_)"; }
+		print STDERR "WARNING: $fn: duplicate entry '$on'$ad, ignoring\n";
+	    }
+	    $hh{$hn}++;
+	}
+	if ($ignore == 0) {
+	    $pkg.=$1 if (/^Package:(.*)/);
+	    $bdl.=$1 if (/^Bundle:(.*)/);
+	    $ver.=$1 if (/^Version:(.*)/);
+	    $dep.=$1 if (/^Depends:(.*)/);
+	    $cts.=$1 if (/^Contains:(.*)/);
+	    $sug.=$1 if (/^Suggests:(.*)/);
+	}
+	$lk=(/^([A-Za-z0-9]+):/)?$1:'';
+    }
+    close IN;
+    if ($lines == 0) {
+	print STDERR "WARNING: $_ does not contain DESCRIPTION";
+    }
+    $ad="$dep,$sug";
+    $ad=~s/\([^,]+\)//g;
+    $ad=~s/[ \t]+//g;
+    $ad=~s/,,/,/g;
+    $ad=~s/^,//;
+    $ad=~s/,$//;
+    $ad='' if ($ad eq ',');
+    $pkg=~s/[ \t]+//g;
+    $bdl=~s/[ \t]+//g;
+    $pkg=$bdl if ($pkg eq '');
+    if ($bdl ne '') {
+	$cts=~s/,/ /g;
+	$cts=~s/\s+/ /g;
+	@cc=split ' ',$cts;
+	foreach(@cc) {
+	    $sx{$_}=1;
+	    $pdep{$_}=$ad;
+	}
+    }
+		
+    $pdep{$pkg}=$ad;
+    $sx{$pkg}=1;
+    if ($mkmk > 0) { $pd=$ad; $pd=~s/,/ /g; print "$pkg: $pd\n"; }
+    #print "$pkg: \"$ad\"\n";
+}
+
+# load additional directories
+while ($more=shift) {
+    next if ($more eq $src || $more eq $realsrc);
+    print STDERR "Loading extra repository $more ...\n";
+    $usedesc=1;
+    @g=<$more/*.DESCRIPTION>;
+    if ($g[0] eq '') {
+	@g=<$more/*.tar.gz>;
+	$usedesc=0;
+    }
+    foreach(@g) {
+	undef $pkg; undef $dep; undef $sug; undef $ver; undef $bdl; undef $cts;
+	if ($usedesc>0) {
+	    open IN, $_;
+	} else {
+	    open IN, "tar fxzO $_ \*/DESCRIPTION|";
+	}
+	undef $pkg; undef $cts;
+	while (<IN>) {
+	    s/[\r\n]+//g;
+	    $pkg=$1 if (/^Package:(.*)/);
+	    $cts=$1 if (/^Contains:(.*)/);
+	}
+	$pkg=~s/[ \t]+//g;
+	if ($cts ne '') {
+	    $cts=~s/,/ /g;
+		$cts=~s/\s+/ /g;
+	    @cc=split ' ',$cts;
+	    foreach(@cc) {
+		$sx{$_}=1;
+	    }
+	}
+	$sx{$pkg}=1 if($pkg ne '');
+	#print STDERR "$pkg ";
+    }
+}
+
+sub addPKG {
+    my ($pkg);
+    $pkg=$_[0];
+    return if ($pkg eq '');
+    #print "Add: $pkg\n";
+    if ($sx{$pkg}!=1) {
+	print STDERR "WARNING: the is no source for package $pkg [",join(',',@cda),"]\n";
+	print "$pkg:\n\t\@echo \"No source for package $pkg, skipping\"\n\n" if ($mkmk > 0);
+    }
+    if ($done{$pkg}==0) {
+	my ($dl,@da,$pn);
+	#print " - new $pkg\n";
+	$indep{$pkg}=1;
+	$dl=$pdep{$pkg};
+	if ($dl ne '') {
+	    #print "   dep list: \"$dl\"\n";
+	    @da=split /,/,$dl;
+	    foreach $pn (@da) {
+		if ($pn ne '' && $pn ne 'R') {
+		    #print " - depends on $pn\n";
+		    if ($done{$pn}==0 && $indep{$pn}>0) {
+			print STDERR "ERROR: circular dependency on $pn [",join(',',@cda),"]\n";
+		    } else {
+			push @cda, $pn;
+			addPKG($pn);
+			pop @cda;
+		    }
+		}
+	    };
+	}
+	push @plist, $pkg;
+	$done{$pkg}=1;
+    }
+}
+
+print "all: ",join(' ',sort(keys(%pdep))),"\n\t\@echo All packages have been built.\n\nclean:\n\trm -f *.log ",join(' ',sort(keys(%pdep))),"\n\n" if ($mkmk > 0);
+
+foreach(sort(keys(%pdep))) {
+    addPKG($_);
+}
+
+exit 0  if ($mkmk > 0);
+
+foreach(@plist) {    
+    @fl=<$realsrc/$_*.tar.gz>;
+    if ($fl[0] eq '') {
+	#print "### $_\n";
+    } else {
+	print "$_\n";
+    }
+    #print join("\n",@plist),"\n";
+}

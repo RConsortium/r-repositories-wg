@@ -1,0 +1,9 @@
+#!/bin/csh
+source /data/gannet/ripley/R/packages/common.csh
+setenv _R_CHECK_PKG_SIZES_ false
+
+setenv _R_CHECK_LENGTH_1_CONDITION_ abort,verbose
+setenv _R_CHECK_LENGTH_1_LOGIC2_ abort,verbose
+
+nohup make -j30 -k check >&! check_log
+

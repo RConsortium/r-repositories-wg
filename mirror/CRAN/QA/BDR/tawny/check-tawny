@@ -1,0 +1,4 @@
+#! /bin/csh
+~/R/check-devel
+~/R/check-patched
+

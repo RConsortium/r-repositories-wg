@@ -1,0 +1,30 @@
+body {margin-left: 5%; margin-right: 5%;}
+
+H1 {             
+    background: white;
+    color: rgb(25%, 25%, 25%);
+    font-family: monospace;
+    font-size: xx-large;
+    text-align: center
+}
+
+H2 {
+    background: white;
+    color: rgb(40%, 40%, 40%);
+    font-family: monospace;
+    font-size: x-large;
+}
+
+ul {
+    margin-top: 0.25ex;
+    margin-bottom: 0.25ex;
+    padding-left: 1em;
+}
+li {
+    margin-top: 0.6ex;
+    margin-bottom: 0.25ex;
+}
+p {
+    margin-top: 0.6ex;
+    margin-bottom: 1.2ex;
+}

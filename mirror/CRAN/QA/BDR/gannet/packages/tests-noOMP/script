@@ -1,0 +1,17 @@
+#!/bin/csh
+source /data/gannet/ripley/R/packages/common.csh
+setenv _R_CHECK_PKG_SIZES_ true
+unsetenv _R_CHECK_COMPILATION_FLAGS_KNOWN_
+setenv _R_CHECK_CODE_ASSIGN_TO_GLOBALENV_ true
+setenv _R_CHECK_CODE_DATA_INTO_GLOBALENV_ true
+
+setenv _R_CHECK_COMPILATION_FLAGS_KNOWN_ -Wno-tautological-overlap-compare
+
+setenv _R_CHECK_ORPHANED_ true
+setenv _R_CHECK_EXCESSIVE_IMPORTS_ 20
+
+setenv JAGS_LIB /usr/local/clang/lib64
+setenv PKG_CONFIG_PATH /usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig
+set path=(/usr/local/clang/bin $path)
+
+nohup make -j30 -k check >&! check_log

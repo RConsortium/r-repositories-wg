@@ -1,0 +1,1 @@
+grep 'Status.*ERROR' *.out

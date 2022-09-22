@@ -1,0 +1,1 @@
+env PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig ~/R/svn/R-3-6-branch/configure -C --disable-java

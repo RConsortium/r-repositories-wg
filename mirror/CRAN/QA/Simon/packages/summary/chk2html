@@ -1,0 +1,30 @@
+#!/usr/bin/perl
+
+$chkf=shift;
+$dstf=shift;
+if ($dstf ne '') {
+    $inf=`basename $dstf`; chop $inf;
+    $inf=~s/00check/00install/;
+    open OUT, ">$dstf";
+}
+$pkg='';
+$pkg=$1 if ($inf=~/([A-Za-z0-9]+)-00/);
+print OUT "<head>\n<title>$pkg - check result</title>\n</head>\n<body bgcolor=white style='font-family: meta, arial, helvetica; font-size: 11pt'>\n";
+open IN, $chkf;
+while (<IN>) {
+    s/[\r\n]+//g;
+    s/$prefix//g;
+    s/\/00_pkg_src//;
+    s/ERROR/<font color=red><b>ERROR<\/b><\/font>/g;
+    s/WARNING/<font color=red><b>WARNING<\/b><\/font>/g;
+    s/^(\*.*OK)$/<font color=#a0a0a0>$1<\/font>/g;
+    s/\/Builds.*\/results//g;
+    s/([a-zA-Z0-9\/.]+00install.out)/<a href=$inf>$1<\/a>/g;
+    if ($dstf eq '') {
+	print "$_<br>\n";
+    } else {
+	print OUT "$_<br>\n";
+    }
+}
+close IN;
+print OUT "</body>\n</html>\n";

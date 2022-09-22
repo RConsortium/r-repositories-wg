@@ -1,0 +1,68 @@
+SOURCES0=${shell ls [A-Z]*.in}
+SOURCES=$(SOURCES0) ${shell ls [a-z]*.in}
+OUTS=$(SOURCES:.in=.out)
+
+.SUFFICES:
+.SUFFICES: .in .out
+
+#Cairo-VARS = PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig
+RGtk2-VARS = PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig
+cairoDevice-VARS = PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig
+#gdtools-VARS = PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig
+rcqp-VARS = PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig
+
+rgdal-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/usr/local/share/KEEP/proj'"
+sf-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/usr/local/share/KEEP/proj'"
+
+## use foo-VARS=MAKE=make MAKEFLAGS=  to suppress parallel installs
+RDieHarder-VARS = MAKE=make MAKEFLAGS=
+frailtypack-VARS = MAKE=make MAKEFLAGS=
+
+## excessive CPU time
+BASS-OPTS = --no-vignettes
+GPareto-OPTS = --no-vignettes
+HTSSIP-OPTS = --no-vignettes
+amen-OPTS = --no-build-vignettes
+bazar-OPTS = --no-examples
+ctmm-OPTS = --no-vignettes
+hetGP-OPTS = --no-vignettes
+laGP-OPTS = --no-vignettes
+mcemGLM-OPTS = --no-vignettes
+morse-OPTS = --no-vignettes
+tgp-OPTS = --no-vignettes
+
+## hang until overall timeout
+svSocket-OPTS = --no-vignettes
+
+## excessive memory in pandoc (> 10GB)
+lifecontingencies-OPTS = --no-vignettes
+radiant-OPTS = --no-vignettes
+
+## very unreliable
+BIEN-OPTS = --no-tests
+
+TSdata-OPTS = --no-vignettes
+patchDVI-OPTS = --no-build-vignettes
+
+## no pari/gp
+elliptic-OPTS = --no-vignettes
+
+## no ipython
+nbconvertR-OPTS = --no-vignettes
+
+## No ODBC set up.
+TSodbc-OPTS = --no-examples --no-vignettes
+
+## crash etc
+iplots-OPTS = --no-examples
+
+## needs API key
+fitbitScraper-OPTS = --no-vignettes
+
+## very slow web accesss
+BIEN-OPTS = --no-tests
+
+## needs Gtk2
+GFD-OPTS =  --no-vignettes
+
+RMark-OPTS = --no-examples --no-tests --no-vignettes

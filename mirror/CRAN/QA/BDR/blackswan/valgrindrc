@@ -1,0 +1,4 @@
+--track-origins=yes
+--leak-check=full
+--fullpath-after=/data/blackswan/ripley/R/
+--suppressions=/data/blackswan/ripley/wcsrtombs.supp

@@ -1,0 +1,2 @@
+env DISPLAY=:5 MAKE="make -j10" Rvg CMD check --check-subdirs=yes-maybe --use-valgrind --extra-arch --no-stop-on-test-error $*
+
