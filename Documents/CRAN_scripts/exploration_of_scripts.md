@@ -22,8 +22,8 @@ Then, we may explore regular checks.
 
 Scripts are:
 
-- A Rscript that prepares the system and run the 'R CMD check" command: https://svn.r-project.org/R-dev-web/trunk/CRAN/QA/Kurt/lib/R/Scripts/check_CRAN_incoming.R
-- It is amended with env. variables: https://svn.r-project.org/R-dev-web/trunk/CRAN/QA/Kurt/.R/check.Renviron
+- A Rscript that prepares the system and run the 'R CMD check" command: https://github.com/r-devel/r-dev-web/blob/master/CRAN/QA/Kurt/lib/R/Scripts/check_CRAN_incoming.R
+- It is amended with env. variables: https://github.com/r-devel/r-dev-web/blob/master/CRAN/QA/Kurt/.R/check.Renviron
 
 => It seems that they do not use the `--as-cran` tag to run the check.
 
@@ -82,12 +82,14 @@ The full check directory is stored in the `check_dir`, which by default is "~/tm
 
 Scripts are:
 
-- sh script: https://svn.r-project.org/R-dev-web/trunk/CRAN/QA/Kurt/bin/check-R-ng
+- sh script: https://github.com/r-devel/r-dev-web/blob/master/CRAN/QA/Kurt/bin/check-R-ng
 
 => This builds the R-devel version
 
-- It runs a R script: https://svn.r-project.org/R-dev-web/trunk/CRAN/QA/Kurt/bin/check-R-ng
-- Which itself uses this list of env. variables: https://svn.r-project.org/R-dev-web/trunk/CRAN/QA/Kurt/bin/check-R-ng
+- It runs a R script: https://github.com/r-devel/r-dev-web/blob/master/CRAN/QA/Kurt/lib/R/Scripts/check_CRAN_regular.R
+     
+
+- Which itself uses this list of env. variables: https://github.com/r-devel/r-dev-web/blob/master/CRAN/QA/Kurt/.R/check.Renviron
 
 =>  This builds all R base packages
 
