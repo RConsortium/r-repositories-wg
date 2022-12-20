@@ -9,7 +9,7 @@ Minutes by Hadley Wickham
 * Kurt Hornik
 * Michael Lawrence
 * Martin Mächler
-* Lluis Revilla
+* Lluís Revilla
 * Joseph Rickert
 * Simon Urbanek
 * Hadley Wickham
