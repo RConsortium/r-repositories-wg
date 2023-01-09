@@ -81,4 +81,14 @@ KH: if we schedule another meeting, would be great to discuss R-hub more. Need t
 
 SU: would like to talk about r-lib/actions. Would like to align efforts. Find some time mid January.
 
+Summary:
+
+* CRAN can’t currently use --as-cran, so it’s mostly aspirational.
+* Would love help to make things more reproducible and to switch some parts of the workflow to docker so that code being checked is more isolated. Kurt would love to work with some one more expert in docker.
+* In principle, Kurt and Uwe are aligned on env vars; differences are mostly due to divergent evolution of scripts. Simon doesn’t set any custom env vars, and is happy to align.
+Linux checks don’t currently use binaries; large potential for performance improvements.
+* Consider adding new check status
+* Would generally like to align more with r-hub and r-lib/actions.
+
 **Action** JR to schedule a meeting in mid January with Gábor.
+
